@@ -113,11 +113,11 @@ export default function UserInfoFields({
               <option value="9x13">9x13</option>
               <option value="10x13,5">10x13,5</option>
               <option value="10x15">10x15</option>
-              <option value="11x15">10x15</option>
+              <option value="11x15">11x15</option>
               <option value="13x18">13x18</option>
               <option value="15x20">15x20</option>
               <option value="20x30">20x30</option>
-              <option value="24x30">20x30</option>
+              <option value="24x30">24x30</option>
               <option value="30x40">30x40</option>
               <option value="30x45">30x45</option>
             </select>
