@@ -40,7 +40,8 @@ const orderSchema = new mongoose.Schema(
     photos: [
       {
         secure_url: String,
-        public_id: { type: String, unique: true }
+        public_id: { type: String, unique: true },
+        brojKomada: Number
       }
     ],
     downloadLink: String,
@@ -88,13 +89,26 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.virtual('racun').get(function() {
-  const count = this.photos.length;
+  let count = 0;
+  this.photos.forEach(photo => {
+    count += photo.brojKomada;
+  });
   let category = 0;
-  if (count > 100) category = 1;
-  if (count > 200) category = 2;
-  if (count > 400) category = 3;
+  if (count >= 100) category = 1;
+  if (count >= 200) category = 2;
+  if (count >= 400) category = 3;
 
-  return this.photos.length * cene[this.format][category];
+  return count * cene[this.format][category];
+});
+
+orderSchema.virtual('ukupnoFotografija').get(function() {
+  let count = 0;
+
+  this.photos.forEach(photo => {
+    count += photo.brojKomada;
+  });
+
+  return count;
 });
 
 const Order = mongoose.model('Order', orderSchema);

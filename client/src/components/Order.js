@@ -96,7 +96,7 @@ export default function Order({ order, setFetchAgainToggle }) {
               <br />
               format: {order.format}
               <br />
-              broj fotografija: {order.photos.length}
+              broj fotografija: {order.ukupnoFotografija}
               <br />
               <br />
               <i className="material-icons" style={{ verticalAlign: '-6px' }}>

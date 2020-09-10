@@ -1,12 +1,15 @@
-import React, { Fragment } from 'react';
-import cene from './../helpers/cene';
-
+import React, { Fragment, useEffect } from 'react';
+import M from 'materialize-css';
 export default function UserInfoFields({
   userInfo,
   setUserInfo,
   uploadFinished,
   uploading
 }) {
+  useEffect(() => {
+    M.updateTextFields();
+  });
+
   return (
     <Fragment>
       <div className="input-field col s5 offset-s1">
@@ -76,7 +79,7 @@ export default function UserInfoFields({
         </div>
       )}
       {(uploadFinished || uploading) && (
-        <div className="chip">
+        <div className="chip" style={{ marginLeft: 55 }}>
           <i className="material-icons" style={{ verticalAlign: '-6px' }}>
             business
           </i>
@@ -99,70 +102,6 @@ export default function UserInfoFields({
           onChange={e => setUserInfo({ ...userInfo, adresa: e.target.value })}
         />
         <label htmlFor="adresa">Vaša adresa</label>
-      </div>
-
-      {!uploading && !uploadFinished && (
-        <div className="row">
-          <div className="input-field col s5 offset-s1">
-            <select
-              defaultValue="13x18"
-              onChange={e =>
-                setUserInfo({ ...userInfo, format: e.target.value })
-              }
-            >
-              <option value="9x13">9x13</option>
-              <option value="10x13,5">10x13,5</option>
-              <option value="10x15">10x15</option>
-              <option value="11x15">11x15</option>
-              <option value="13x18">13x18</option>
-              <option value="15x20">15x20</option>
-              <option value="20x30">20x30</option>
-              <option value="24x30">24x30</option>
-              <option value="30x40">30x40</option>
-              <option value="30x45">30x45</option>
-            </select>
-            <label>Format</label>
-          </div>
-          <div className="input-field col s5">
-            <button
-              data-target="modal2"
-              className=" btn-flat indigo-text modal-trigger"
-            >
-              Cene formata
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div id="modal2" className="modal modal-fixed-footer">
-        <div className="modal-content">
-          <h6>Cene formata</h6>
-          <table className="centered">
-            <thead>
-              <tr>
-                <th>veličina formata</th>
-                <th>cena u din.</th>
-                <th> >100 fotografija</th>
-                <th> >200 fotografija</th>
-                <th> >400 fotografija</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.keys(cene).map(format => (
-                <tr key={format}>
-                  <td>{format}</td>
-                  <td>{cene[format][0]}</td>
-                  <td>{cene[format][1]}</td>
-                  <td>{cene[format][2]}</td>
-                  <td>{cene[format][3]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="modal-footer">
-          <a className="modal-close waves-effect  btn-flat">Ok</a>
-        </div>
       </div>
 
       {(uploadFinished || uploading) && (

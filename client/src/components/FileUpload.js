@@ -9,7 +9,8 @@ import SmartGallery from 'react-smart-gallery';
 import Spinner from './Spinner';
 import Dropzone from './Dropzone';
 
-import Gallery from 'react-photo-gallery';
+import GallerySelector from './GallerySelector';
+import CeneModal from './CeneModal';
 
 import M from 'materialize-css';
 
@@ -21,10 +22,12 @@ export const FileUpload = () => {
   const [files, setFiles] = useState([]);
   const [fileUploadPercentage, setFileUploadPercentage] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [resultMessage, setResultMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [uploadFinished, setUploadFinished] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [userFieldsValid, setUserFieldsValid] = useState(false);
+  const [ukupnoKomada, setUkupnoKomada] = useState(0);
+
   const [userInfo, setUserInfo] = useState({
     ime: '',
     prezime: '',
@@ -38,15 +41,22 @@ export const FileUpload = () => {
   const [racun, setRacun] = useState({ tarifa: '', ukupno: '' });
 
   useEffect(() => {
-    if (files && userInfo.format) {
+    if (files) {
+      let ukupnoTemp = 0;
+      files.forEach(file => {
+        ukupnoTemp += file.brojKomada;
+      });
+
+      setUkupnoKomada(ukupnoTemp);
+
       let category = 0;
-      if (files.length > 100) category = 1;
-      if (files.length > 200) category = 2;
-      if (files.length > 400) category = 3;
+      if (ukupnoTemp >= 100) category = 1;
+      if (ukupnoTemp >= 200) category = 2;
+      if (ukupnoTemp >= 400) category = 3;
 
       setRacun({
         tarifa: cene[userInfo.format][category],
-        ukupno: cene[userInfo.format][category] * files.length
+        ukupno: cene[userInfo.format][category] * ukupnoTemp
       });
     }
   }, [files, userInfo.format]);
@@ -84,10 +94,18 @@ export const FileUpload = () => {
     else setUserFieldsValid(false);
   }, [userInfo, files]);
 
+  const nextStep = e => {
+    e.preventDefault();
+    setStep(step => step + 1);
+  };
+  const prevStep = e => {
+    e.preventDefault();
+    if (step !== 1) setStep(step => step - 1);
+  };
   const OnSubmit = async e => {
     e.preventDefault();
     setUploading(true);
-    setResultMessage(null);
+    setSuccessMessage(null);
     const filesArr = Object.values(files);
 
     let resProm = [];
@@ -132,6 +150,8 @@ export const FileUpload = () => {
         try {
           res[i] = await resProm[i];
 
+          res[i].data.brojKomada = filesArr[i].brojKomada;
+
           const newImage = {
             src: res[i].data.secure_url,
             width: res[i].data.width,
@@ -141,7 +161,7 @@ export const FileUpload = () => {
         } catch (err) {
           setUploadFinished(false);
           M.toast({ html: 'Došlo je do greške' });
-          setResultMessage('Došlo je do greške, pokušajte ponovo');
+          setSuccessMessage('Došlo je do greške, pokušajte ponovo');
           setUploading(false);
           console.log(err);
           return;
@@ -150,7 +170,8 @@ export const FileUpload = () => {
       try {
         let photos = res.map(res => ({
           secure_url: res.data.secure_url,
-          public_id: res.data.public_id
+          public_id: res.data.public_id,
+          brojKomada: res.data.brojKomada
         }));
 
         const formData = new FormData();
@@ -166,13 +187,13 @@ export const FileUpload = () => {
         await axios.post('/api/v1/orders', formData);
 
         M.toast({ html: 'Fotografije su sačuvane' });
-        setResultMessage('Vaša porudžbenica je uspešno sačuvana');
+        setSuccessMessage('Vaša porudžbenica je uspešno sačuvana');
         setUploading(false);
         setUploadFinished(true);
       } catch (err) {
         setUploadFinished(false);
         M.toast({ html: 'Došlo je do greške' });
-        setResultMessage('Došlo je do greške, pokušajte ponovo');
+        setSuccessMessage('Došlo je do greške, pokušajte ponovo');
         setUploading(false);
         console.log(err);
       }
@@ -191,51 +212,173 @@ export const FileUpload = () => {
           </h6>
         </div>
         <form onSubmit={OnSubmit}>
-          <div className="row">
-            <div className="col s6 offset-s3 center-align">
-              {!uploading && !uploadFinished && (
-                <Dropzone
-                  setFilePreviews={setFilePreviews}
-                  setFiles={setFiles}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="row">
-            <div className="col s6">
-              <UserInfoFields
-                userInfo={userInfo}
-                setUserInfo={setUserInfo}
-                uploadFinished={uploadFinished}
-                uploading={uploading}
-              />
-            </div>
-            <div className="col s6">
-              {files[0] ? (
-                <div className="center-align">
-                  <i style={{ color: 'grey' }}>
-                    ukupno fotografija: {files.length}
-                  </i>
-                  <SmartGallery images={files.map(file => file.preview)} />
+          {step === 1 && (
+            <Fragment>
+              <div className="row">
+                <div className="col s6 offset-s3 center-align">
+                  {!uploading && !uploadFinished && (
+                    <Dropzone
+                      setFilePreviews={setFilePreviews}
+                      setFiles={setFiles}
+                    />
+                  )}
                 </div>
-              ) : (
-                <img
-                  src={splashImage}
-                  className="responsive-img"
-                  alt="Splash image"
-                ></img>
+              </div>
+              <div className="row" style={{ marginBottom: 0 }}>
+                {files[0] && (
+                  <div className="col s4 offset-s3">
+                    <div className="center-align">
+                      <SmartGallery
+                        images={files.map(file => file.preview)}
+                        width={320}
+                        height={320}
+                      />
+                    </div>
+                  </div>
+                )}
+                {!files[0] && (
+                  <div className="col s4 offset-s3">
+                    <img
+                      src={splashImage}
+                      className="responsive-img"
+                      alt="Splash image"
+                    ></img>
+                  </div>
+                )}
+                <div className="col s2" style={{ marginTop: 10 }}>
+                  <div className="input-field row">
+                    <select
+                      defaultValue="13x18"
+                      onChange={e =>
+                        setUserInfo({ ...userInfo, format: e.target.value })
+                      }
+                    >
+                      <option value="9x13">9x13</option>
+                      <option value="10x13,5">10x13,5</option>
+                      <option value="10x15">10x15</option>
+                      <option value="11x15">11x15</option>
+                      <option value="13x18">13x18</option>
+                      <option value="15x20">15x20</option>
+                      <option value="20x30">20x30</option>
+                      <option value="24x30">24x30</option>
+                      <option value="30x40">30x40</option>
+                      <option value="30x45">30x45</option>
+                    </select>
+                    <label>Format</label>
+                  </div>
+                  <div className="input-field row">
+                    <button
+                      data-target="modal2"
+                      className=" btn-flat indigo-text modal-trigger"
+                    >
+                      Cene formata
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Fragment>
+          )}
+
+          {step === 2 && (
+            <Fragment>
+              <GallerySelector
+                files={files}
+                setFiles={setFiles}
+              ></GallerySelector>
+            </Fragment>
+          )}
+
+          {step === 3 && (
+            <Fragment>
+              <div className="row">
+                <div className="col s6">
+                  <UserInfoFields
+                    userInfo={userInfo}
+                    setUserInfo={setUserInfo}
+                    uploadFinished={uploadFinished}
+                    uploading={uploading}
+                  />
+                </div>
+
+                <div
+                  className="col s6"
+                  style={{
+                    margin: 0,
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    overflowY: 'auto',
+                    maxHeight: 398,
+                    justifyContent: 'flex-start'
+                  }}
+                >
+                  {fileUploadPercentage.map(file => (
+                    <div key={file.name} style={{ padding: 2, margin: 0 }}>
+                      <div style={{ zIndex: -100 }}>
+                        <img
+                          src={
+                            files.find(item => item.name === file.name).preview
+                          }
+                          style={{
+                            width: 90,
+                            height: 90,
+                            objectFit: 'cover',
+                            zIndex: -100
+                          }}
+                        />
+                      </div>
+                      <div
+                        className="white-text"
+                        style={{
+                          position: 'relative',
+                          textAlign: 'center',
+                          marginTop: -30,
+                          marginBottom: 3,
+                          zIndex: 100
+                        }}
+                      >
+                        <span
+                          style={{
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            paddingLeft: 5,
+                            paddingRight: 5,
+                            float: 'right'
+                          }}
+                        >
+                          {
+                            files.find(item => item.name === file.name)
+                              .brojKomada
+                          }
+                        </span>
+                        <div
+                          className="progress"
+                          style={{ marginBottom: 0, marginTop: 0 }}
+                        >
+                          <div
+                            className="determinate"
+                            style={{ width: `${file.value}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Fragment>
+          )}
+
+          <div className="row">
+            <div className="col s2 offset-s1" style={{ marginTop: 40 }}>
+              {step !== 1 && !uploadFinished && !uploading && (
+                <button className="btn-flat" onClick={e => prevStep(e)}>
+                  <i class="material-icons left">arrow_back</i>Nazad
+                </button>
               )}
             </div>
-          </div>
-
-          {files[0] && (
-            <div className="row">
-              <div className="col s4 offset-s5" style={{ color: 'grey' }}>
-                {' '}
+            <div className="col s4 offset-s2" style={{ color: 'grey' }}>
+              {files[0] && (
                 <blockquote>
                   <p style={{ marginBottom: 0, marginTop: 0 }}>
-                    Broj fotografija: {files.length}
+                    Broj fotografija: {ukupnoKomada}
                   </p>
                   <p style={{ marginBottom: 0, marginTop: 0 }}>
                     Cena po fotografiji: {racun.tarifa} rsd
@@ -247,9 +390,32 @@ export const FileUpload = () => {
                     )}
                   </p>
                 </blockquote>
-              </div>
+              )}
             </div>
-          )}
+
+            <div className="col s3" style={{ marginTop: 35 }}>
+              {step !== 3 && (
+                <button
+                  className={`btn btn-large ${!files[0] ? 'disabled' : ''}`}
+                  onClick={e => nextStep(e)}
+                >
+                  <i class="material-icons right">arrow_forward</i>Dalje
+                </button>
+              )}
+              {step === 3 && !uploading && !uploadFinished && (
+                <button
+                  className={`btn-large modal-trigger ${
+                    !userFieldsValid ? 'disabled' : ''
+                  }`}
+                  data-target="modal1"
+                >
+                  Pošalji
+                  <i className="material-icons right">send</i>
+                </button>
+              )}
+            </div>
+          </div>
+
           {uploading && (
             <div className="progress">
               <div className="indeterminate"></div>
@@ -262,55 +428,13 @@ export const FileUpload = () => {
             </div>
           )}
 
-          {resultMessage && (
+          {successMessage && (
             <div className="col s12 center-align indigo-text">
               {' '}
               <i className="material-icons" style={{ verticalAlign: '-6px' }}>
                 check
               </i>
-              <i>{resultMessage}</i>
-            </div>
-          )}
-
-          {!uploading && !uploadFinished && (
-            <div className="row center-align">
-              <button
-                className={`btn-large modal-trigger ${
-                  !userFieldsValid ? 'disabled' : ''
-                }`}
-                data-target="modal1"
-              >
-                Pošalji
-                <i className="material-icons right">send</i>
-              </button>
-            </div>
-          )}
-
-          {files[0] && (
-            <div className="row">
-              <div
-                className="col s12"
-                style={{
-                  paddingLeft: 80,
-                  paddingRight: 80,
-                  overflowY: 'auto',
-                  height: 230
-                }}
-              >
-                <ul className="collection">
-                  {fileUploadPercentage.map(file => (
-                    <li className="collection-item" key={file.name}>
-                      {file.name}{' '}
-                      <div className="progress">
-                        <div
-                          className="determinate"
-                          style={{ width: `${file.value}%` }}
-                        ></div>
-                      </div>{' '}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <i>{successMessage}</i>
             </div>
           )}
 
@@ -333,7 +457,7 @@ export const FileUpload = () => {
                   <blockquote>
                     <p>Format: {userInfo.format}</p>
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
-                      Broj fotografija: {files.length}
+                      Broj fotografija: {ukupnoKomada}
                     </p>
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
                       Cena po fotografiji: {racun.tarifa} rsd
@@ -366,18 +490,9 @@ export const FileUpload = () => {
             <Spinner />
           </div>
         )}
-
-        {uploadedFiles.length > 5 && (
-          <div className="row">
-            <div
-              className="col s12"
-              style={{ padding: 30, overflowY: 'auto', height: 700 }}
-            >
-              <Gallery photos={uploadedFiles} />
-            </div>
-          </div>
-        )}
       </div>
+
+      <CeneModal></CeneModal>
     </Fragment>
   );
 };

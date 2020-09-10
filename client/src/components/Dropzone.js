@@ -14,6 +14,7 @@ export default function Dropzone({ setFilePreviews, setFiles }) {
           })
         )
       );
+      acceptedFiles.forEach(file => (file.brojKomada = 1));
       setFiles(acceptedFiles);
       console.log(acceptedFiles);
     }
