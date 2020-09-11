@@ -106,6 +106,7 @@ export const FileUpload = () => {
     e.preventDefault();
     setUploading(true);
     setSuccessMessage(null);
+
     const filesArr = Object.values(files);
 
     let resProm = [];

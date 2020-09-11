@@ -64,7 +64,7 @@ export default function UserInfoFields({
       {!uploadFinished && !uploading && (
         <div className="input-field col s10 offset-s1">
           <select
-            defaultValue="radnja centar"
+            defaultValue={userInfo.preuzimanje}
             onChange={e =>
               setUserInfo({ ...userInfo, preuzimanje: e.target.value })
             }
