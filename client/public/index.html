@@ -32,7 +32,7 @@
         transition: border 250ms;
       }
       .dropzone:hover {
-        border: 3px dashed black;
+        border: 3px dashed rgb(48, 48, 48);
         cursor: pointer;
       }
       ::-moz-selection {
@@ -45,16 +45,23 @@
         background: #3c00d4;
       }
 
-      img {
-        image-rendering: -webkit-optimize-contrast;
+      .scroll1::-webkit-scrollbar {
+        width: 7px;
+      }
+
+      .scroll1::-webkit-scrollbar-track {
+        background: #ddd;
+      }
+
+      .scroll1::-webkit-scrollbar-thumb {
+        background: #666;
       }
     </style>
-    <title>Art Photo Print</title>
+    <title>Foto Art - Fotografska radnja Foto Art Nis</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <div style="height: 80px"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script></script>
   </body>

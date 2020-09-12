@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import FileUpload from './components/FileUpload';
 import Overview from './components/Overview';
 import Nav from './components/Nav';
-import Nav2 from './components/Nav2';
 import Login from './components/Login';
 import OrderDetails from './components/OrderDetails';
 import { HashRouter as Router, Switch, Route } from 'react-router-dom';
@@ -19,7 +18,7 @@ function App() {
     <React.Fragment>
       <Router>
         <UserContext.Provider value={{ userData, setUserData }}>
-          <Nav2 />
+          <Nav />
           <Switch>
             <Route path="/" exact component={FileUpload}></Route>
             <Route path="/upload" exact component={FileUpload}></Route>

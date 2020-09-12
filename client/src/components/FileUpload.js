@@ -10,6 +10,7 @@ import Spinner from './Spinner';
 import Dropzone from './Dropzone';
 
 import GallerySelector from './GallerySelector';
+import GalleryUploadProgress from './GalleryUploadProgress';
 import CeneModal from './CeneModal';
 
 import M from 'materialize-css';
@@ -27,6 +28,8 @@ export const FileUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [userFieldsValid, setUserFieldsValid] = useState(false);
   const [ukupnoKomada, setUkupnoKomada] = useState(0);
+  const [resizing, setResizing] = useState(false);
+  const [resizeProgress, setResizeProgress] = useState({ count: 0, total: 0 });
 
   const [userInfo, setUserInfo] = useState({
     ime: '',
@@ -221,6 +224,8 @@ export const FileUpload = () => {
                     <Dropzone
                       setFilePreviews={setFilePreviews}
                       setFiles={setFiles}
+                      setResizing={setResizing}
+                      setResizeProgress={setResizeProgress}
                     />
                   )}
                 </div>
@@ -230,20 +235,39 @@ export const FileUpload = () => {
                   <div className="col s4 offset-s3">
                     <div className="center-align">
                       <SmartGallery
-                        images={files.map(file => file.preview)}
+                        images={filePreviews.map(file => file.preview)}
                         width={320}
                         height={320}
                       />
                     </div>
                   </div>
                 )}
-                {!files[0] && (
+                {!files[0] && !resizing && (
                   <div className="col s4 offset-s3">
                     <img
                       src={splashImage}
                       className="responsive-img"
                       alt="Splash image"
                     ></img>
+                  </div>
+                )}
+                {resizing && (
+                  <div className=" col s4 offset-s3 center-align">
+                    <Spinner />
+                    <div className="progress" style={{ marginBottom: 0 }}>
+                      <div
+                        className="determinate"
+                        style={{
+                          width: `${Math.floor(
+                            (resizeProgress.count * 100) / resizeProgress.total
+                          )}%`
+                        }}
+                      ></div>
+                    </div>
+                    <p style={{ color: 'grey' }}>
+                      <i>Učitavanje fajlova: </i>
+                      {resizeProgress.count}/{resizeProgress.total}
+                    </p>
                   </div>
                 )}
                 <div className="col s2" style={{ marginTop: 10 }}>
@@ -292,7 +316,7 @@ export const FileUpload = () => {
           {step === 3 && (
             <Fragment>
               <div className="row">
-                <div className="col s6">
+                <div className="col m6">
                   <UserInfoFields
                     userInfo={userInfo}
                     setUserInfo={setUserInfo}
@@ -301,68 +325,10 @@ export const FileUpload = () => {
                   />
                 </div>
 
-                <div
-                  className="col s6"
-                  style={{
-                    margin: 0,
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    overflowY: 'auto',
-                    maxHeight: 398,
-                    justifyContent: 'flex-start'
-                  }}
-                >
-                  {fileUploadPercentage.map(file => (
-                    <div key={file.name} style={{ padding: 2, margin: 0 }}>
-                      <div style={{ zIndex: -100 }}>
-                        <img
-                          src={
-                            files.find(item => item.name === file.name).preview
-                          }
-                          style={{
-                            width: 90,
-                            height: 90,
-                            objectFit: 'cover',
-                            zIndex: -100
-                          }}
-                        />
-                      </div>
-                      <div
-                        className="white-text"
-                        style={{
-                          position: 'relative',
-                          textAlign: 'center',
-                          marginTop: -30,
-                          marginBottom: 3,
-                          zIndex: 100
-                        }}
-                      >
-                        <span
-                          style={{
-                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                            paddingLeft: 5,
-                            paddingRight: 5,
-                            float: 'right'
-                          }}
-                        >
-                          {
-                            files.find(item => item.name === file.name)
-                              .brojKomada
-                          }
-                        </span>
-                        <div
-                          className="progress"
-                          style={{ marginBottom: 0, marginTop: 0 }}
-                        >
-                          <div
-                            className="determinate"
-                            style={{ width: `${file.value}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <GalleryUploadProgress
+                  fileUploadPercentage={fileUploadPercentage}
+                  files={files}
+                ></GalleryUploadProgress>
               </div>
             </Fragment>
           )}
@@ -400,7 +366,7 @@ export const FileUpload = () => {
                   className={`btn btn-large ${!files[0] ? 'disabled' : ''}`}
                   onClick={e => nextStep(e)}
                 >
-                  <i class="material-icons right">arrow_forward</i>Dalje
+                  <i className="material-icons right">arrow_forward</i>Dalje
                 </button>
               )}
               {step === 3 && !uploading && !uploadFinished && (

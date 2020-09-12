@@ -255,10 +255,12 @@ exports.downloadOld = function(req, res) {
 
 exports.download = catchAsync(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
-
+  const folder = `orders/${order.ime}_${order.prezime}_${order.format}_${order.telefon}_${order.preuzimanje}`;
   const downloadLink = cloudinary.utils.download_zip_url({
-    public_ids: order.photos.map(photo => photo.public_id),
-    resource_type: 'image'
+    //public_ids: order.photos.map(photo => photo.public_id),
+    prefixes: folder,
+    resource_type: 'image',
+    mode: 'download'
   });
 
   res.status(200).json({
