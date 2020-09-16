@@ -13,7 +13,7 @@ const GalleryUploadProgress = ({ fileUploadPercentage, files }) => {
   };
   return (
     <div
-      className="col m6 scroll1"
+      className="col l6 m12 scroll1"
       style={{
         margin: 0,
         display: 'flex',

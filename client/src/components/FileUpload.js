@@ -232,18 +232,17 @@ export const FileUpload = () => {
               </div>
               <div className="row" style={{ marginBottom: 0 }}>
                 {files[0] && (
-                  <div className="col s4 offset-s3">
-                    <div className="center-align">
-                      <SmartGallery
-                        images={filePreviews.map(file => file.preview)}
-                        width={320}
-                        height={320}
-                      />
-                    </div>
+                  <div className="col s12">
+                    <SmartGallery
+                      rootStyle={{ margin: 'auto' }}
+                      images={files.map(file => file.preview)}
+                      width={320}
+                      height={320}
+                    />
                   </div>
                 )}
                 {!files[0] && !resizing && (
-                  <div className="col s4 offset-s3">
+                  <div className="col s4 offset-s4">
                     <img
                       src={splashImage}
                       className="responsive-img"
@@ -252,7 +251,7 @@ export const FileUpload = () => {
                   </div>
                 )}
                 {resizing && (
-                  <div className=" col s4 offset-s3 center-align">
+                  <div className=" col s4 offset-s4 center-align">
                     <Spinner />
                     <div className="progress" style={{ marginBottom: 0 }}>
                       <div
@@ -270,35 +269,35 @@ export const FileUpload = () => {
                     </p>
                   </div>
                 )}
-                <div className="col s2" style={{ marginTop: 10 }}>
-                  <div className="input-field row">
-                    <select
-                      defaultValue="13x18"
-                      onChange={e =>
-                        setUserInfo({ ...userInfo, format: e.target.value })
-                      }
-                    >
-                      <option value="9x13">9x13</option>
-                      <option value="10x13,5">10x13,5</option>
-                      <option value="10x15">10x15</option>
-                      <option value="11x15">11x15</option>
-                      <option value="13x18">13x18</option>
-                      <option value="15x20">15x20</option>
-                      <option value="20x30">20x30</option>
-                      <option value="24x30">24x30</option>
-                      <option value="30x40">30x40</option>
-                      <option value="30x45">30x45</option>
-                    </select>
-                    <label>Format</label>
-                  </div>
-                  <div className="input-field row">
-                    <button
-                      data-target="modal2"
-                      className=" btn-flat indigo-text modal-trigger"
-                    >
-                      Cene formata
-                    </button>
-                  </div>
+              </div>
+              <div className="row center-align" style={{ marginTop: 10 }}>
+                <div className="input-field col s3 offset-s3">
+                  <select
+                    defaultValue="13x18"
+                    onChange={e =>
+                      setUserInfo({ ...userInfo, format: e.target.value })
+                    }
+                  >
+                    <option value="9x13">9x13</option>
+                    <option value="10x13,5">10x13,5</option>
+                    <option value="10x15">10x15</option>
+                    <option value="11x15">11x15</option>
+                    <option value="13x18">13x18</option>
+                    <option value="15x20">15x20</option>
+                    <option value="20x30">20x30</option>
+                    <option value="24x30">24x30</option>
+                    <option value="30x40">30x40</option>
+                    <option value="30x45">30x45</option>
+                  </select>
+                  <label>Format</label>
+                </div>
+                <div className="input-field col s6">
+                  <button
+                    data-target="modal2"
+                    className=" btn-flat indigo-text modal-trigger"
+                  >
+                    Cene formata
+                  </button>
                 </div>
               </div>
             </Fragment>
@@ -316,7 +315,7 @@ export const FileUpload = () => {
           {step === 3 && (
             <Fragment>
               <div className="row">
-                <div className="col m6">
+                <div className="col l6 m12">
                   <UserInfoFields
                     userInfo={userInfo}
                     setUserInfo={setUserInfo}
@@ -336,8 +335,13 @@ export const FileUpload = () => {
           <div className="row">
             <div className="col s2 offset-s1" style={{ marginTop: 40 }}>
               {step !== 1 && !uploadFinished && !uploading && (
-                <button className="btn-flat" onClick={e => prevStep(e)}>
-                  <i class="material-icons left">arrow_back</i>Nazad
+                <button
+                  className="btn-flat"
+                  style={{ padding: 5 }}
+                  onClick={e => prevStep(e)}
+                >
+                  <i class="material-icons left">arrow_back</i>
+                  <span className="hide-on-med-and-down">Nazad</span>
                 </button>
               )}
             </div>
@@ -363,10 +367,15 @@ export const FileUpload = () => {
             <div className="col s3" style={{ marginTop: 35 }}>
               {step !== 3 && (
                 <button
-                  className={`btn btn-large ${!files[0] ? 'disabled' : ''}`}
+                  className={`btn btn-large truncate ${
+                    !files[0] ? 'disabled' : ''
+                  }`}
                   onClick={e => nextStep(e)}
                 >
-                  <i className="material-icons right">arrow_forward</i>Dalje
+                  <i className="material-icons right hide-on-med-and-down">
+                    arrow_forward
+                  </i>
+                  Dalje
                 </button>
               )}
               {step === 3 && !uploading && !uploadFinished && (
@@ -377,7 +386,9 @@ export const FileUpload = () => {
                   data-target="modal1"
                 >
                   Pošalji
-                  <i className="material-icons right">send</i>
+                  <i className="material-icons right hide-on-med-and-down">
+                    send
+                  </i>
                 </button>
               )}
             </div>

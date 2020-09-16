@@ -1,4 +1,5 @@
 import React, { Fragment, useState } from 'react';
+import RemovePhotoModal from './RemovePhotoModal';
 
 const GallerySelector = ({ files, setFiles }) => {
   const [displayedFiles, setDisplayedFiles] = useState(24);
@@ -30,18 +31,25 @@ const GallerySelector = ({ files, setFiles }) => {
     }
   };
 
+  const removePhoto = (e, index) => {
+    e.preventDefault();
+    const newFiles = [...files];
+    newFiles.splice(index, 1);
+    setFiles(newFiles);
+  };
+
   return (
     <Fragment>
       <div
         className="row scroll1"
         style={{
           margin: 50,
-          marginRight: 90,
-          marginLeft: 200,
+          //marginRight: 90,
+          //marginLeft: 200,
           display: 'flex',
           flexWrap: 'wrap',
           overflowY: 'auto',
-          maxHeight: 400,
+          maxHeight: 450,
           justifyContent: 'flex-start'
         }}
         onScroll={e => handleScroll(e)}
@@ -50,12 +58,17 @@ const GallerySelector = ({ files, setFiles }) => {
           if (index < displayedFiles)
             return (
               <div key={file.name} style={{ padding: 8, margin: 0 }}>
+                <RemovePhotoModal
+                  file={file}
+                  index={index}
+                  removePhoto={removePhoto}
+                ></RemovePhotoModal>
                 <div style={{ zIndex: -100 }}>
                   <img
                     src={file.preview}
                     style={{
-                      width: 160,
-                      height: 160,
+                      width: 150,
+                      height: 150,
                       objectFit: 'cover',
                       zIndex: -100
                     }}
@@ -71,13 +84,25 @@ const GallerySelector = ({ files, setFiles }) => {
                     zIndex: 100
                   }}
                 >
-                  <button
-                    className="btn-flat "
-                    style={{ fontWeight: 'bold', marginRight: 14 }}
-                    onClick={e => decrementPhoto(e, file.name)}
-                  >
-                    <i className="tiny material-icons white-text">remove</i>
-                  </button>
+                  {file.brojKomada > 1 && (
+                    <button
+                      className="btn-flat "
+                      style={{ fontWeight: 'bold', marginRight: 14 }}
+                      onClick={e => decrementPhoto(e, file.name)}
+                    >
+                      <i className="tiny material-icons white-text">remove</i>
+                    </button>
+                  )}
+                  {file.brojKomada === 1 && (
+                    <button
+                      className="btn-flat modal-trigger"
+                      style={{ fontWeight: 'bold', marginRight: 14 }}
+                      data-target={`removePhotoModal${index}`}
+                    >
+                      <i className="tiny material-icons white-text">remove</i>
+                    </button>
+                  )}
+
                   {file.brojKomada}
                   <button
                     className="btn-flat"
