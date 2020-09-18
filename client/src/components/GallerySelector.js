@@ -40,10 +40,23 @@ const GallerySelector = ({ files, setFiles }) => {
 
   return (
     <Fragment>
+      <div className="row center-align" style={{ marginBottom: 5 }}>
+        <p
+          style={{
+            color: '#787878',
+            fontFamily: 'Mulish',
+            fontSize: 16,
+            margin: 0
+          }}
+        >
+          Izaberite broj fotografija:
+        </p>
+      </div>
       <div
         className="row scroll1"
         style={{
-          margin: 50,
+          margin: 10,
+          marginBottom: 30,
           //marginRight: 90,
           //marginLeft: 200,
           display: 'flex',

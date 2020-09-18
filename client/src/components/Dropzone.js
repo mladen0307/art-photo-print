@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import uploadIcon from '../download.png';
 
@@ -7,13 +7,24 @@ import resizeFiles from './../helpers/resizeFiles';
 export default function Dropzone({
   setFilePreviews,
   setFiles,
+  resizing,
   setResizing,
   setResizeProgress
 }) {
+  const [dragHover, setDragHover] = useState(false);
   const { getRootProps, getInputProps } = useDropzone({
     accept: 'image/*',
+    noClick: resizing,
+    noDrag: resizing,
+    onDragEnter: () => {
+      setDragHover(true);
+    },
+    onDragLeave: () => {
+      setDragHover(false);
+    },
     //maxSize: 10485760,
     onDrop: async acceptedFiles => {
+      setDragHover(false);
       setFiles([]);
       setResizing(true);
       const resized = await resizeFiles(acceptedFiles, count =>
@@ -29,13 +40,17 @@ export default function Dropzone({
       );
       resized.forEach(file => (file.brojKomada = 1));
       setFiles(resized);
-      console.log(resized);
+      //console.log(resized);
     }
   });
 
   return (
     <section>
-      <div className="dropzone" {...getRootProps({ className: 'dropzone' })}>
+      <div
+        className="dropzone"
+        style={{ borderColor: dragHover ? '#303030' : '#999999' }}
+        {...getRootProps({ className: 'dropzone' })}
+      >
         <input {...getInputProps()} />
         <img
           src={uploadIcon}
@@ -47,9 +62,15 @@ export default function Dropzone({
             marginTop: '24px'
           }}
         />
-        <h6 style={{ color: '#bdbdbd', margin: 3 }}>
-          Izaberite ili privucite fajlove
-        </h6>
+        {!dragHover ? (
+          <h6 style={{ color: '#bdbdbd', margin: 3 }}>
+            Izaberite ili privucite fajlove
+          </h6>
+        ) : (
+          <h6 style={{ color: '#303030', margin: 3 }}>
+            Izaberite ili privucite fajlove
+          </h6>
+        )}
       </div>
     </section>
   );

@@ -40,7 +40,7 @@ export default function Login() {
   return (
     <div className="container">
       <br />
-      <div className="row">
+      <div className="row" style={{ marginTop: 70 }}>
         <div className="col s4 offset-s4">
           <form onSubmit={OnSubmit} className="col s12">
             <div className="row">

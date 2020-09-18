@@ -44,6 +44,7 @@ const orderSchema = new mongoose.Schema(
         brojKomada: Number
       }
     ],
+    folder: String,
     downloadLink: String,
     format: {
       type: String,

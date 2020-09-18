@@ -75,7 +75,7 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
     };
     await email.send(
       'email',
-      'Foto Art - Vaša porudžbenica je spremna za isporuku',
+      'Foto Art - Vaša porudžbenica je spremna',
       emailData
     );
   }
@@ -255,7 +255,7 @@ exports.downloadOld = function(req, res) {
 
 exports.download = catchAsync(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
-  const folder = `orders/${order.ime}_${order.prezime}_${order.format}_${order.telefon}_${order.preuzimanje}`;
+  const folder = order.folder;
   const downloadLink = cloudinary.utils.download_zip_url({
     //public_ids: order.photos.map(photo => photo.public_id),
     prefixes: folder,

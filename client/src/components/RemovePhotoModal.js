@@ -7,7 +7,7 @@ const RemovePhotoModal = ({ file, index, removePhoto }) => {
         <h5>Ukloni fotografiju</h5>
         <div className="row" style={{ marginTop: 20 }}>
           <div className="col s3">
-            <img src={file.preview} className="responsive-img" />
+            <img src={file.preview} alt="preview" className="responsive-img" />
           </div>
           <div className="col s4">
             <h6> Da li želite da uklonite fotografiju iz porudžbenice</h6>

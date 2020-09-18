@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import useFetchOrders from './useFetchOrders';
 import Order from './Order';
 import OrdersPagination from './OrdersPagination';
@@ -34,36 +34,40 @@ const Overview = () => {
     if (error) history.push('/login');
   }, [error]);
   return (
-    <div className="container">
-      <OrdersPagination
-        page={page}
-        setPage={setPage}
-        hasNextPage={hasNextPage}
-      />
-      <a className="btn-floating" onClick={e => refreshOrders(e)}>
-        <i className="material-icons">refresh</i>
-      </a>
-      {loading && (
-        <div className=" row center-align">
-          <Spinner />
+    <Fragment>
+      <div className="container">
+        <OrdersPagination
+          page={page}
+          setPage={setPage}
+          hasNextPage={hasNextPage}
+        />
+        <a className="btn-floating" onClick={e => refreshOrders(e)}>
+          <i className="material-icons">refresh</i>
+        </a>
+        {loading && (
+          <div className=" row center-align">
+            <Spinner />
+          </div>
+        )}
+        {error && <h2>Error</h2>}
+        <div className="row">
+          {orders.map(order => (
+            <Order
+              key={order.id}
+              order={order}
+              setFetchAgainToggle={setFetchAgainToggle}
+            />
+          ))}
         </div>
-      )}
-      {error && <h2>Error</h2>}
-      <div className="row">
-        {orders.map(order => (
-          <Order
-            key={order.id}
-            order={order}
-            setFetchAgainToggle={setFetchAgainToggle}
-          />
-        ))}
+        <OrdersPagination
+          page={page}
+          setPage={setPage}
+          hasNextPage={hasNextPage}
+        />
+        <br></br>
+        <br></br>
       </div>
-      <OrdersPagination
-        page={page}
-        setPage={setPage}
-        hasNextPage={hasNextPage}
-      />
-    </div>
+    </Fragment>
   );
 };
 export default Overview;

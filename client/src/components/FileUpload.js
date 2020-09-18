@@ -3,7 +3,8 @@ import axios from 'axios';
 
 import UserInfoFields from './UserInfoFields';
 import splashImage from '../image_upload.png';
-import paralaxImage from '../paralax-image.jpg';
+import successImage from '../saved_success.png';
+import banner from '../photoprintbanner.jpg';
 
 import SmartGallery from 'react-smart-gallery';
 import Spinner from './Spinner';
@@ -23,8 +24,13 @@ export const FileUpload = () => {
   const [files, setFiles] = useState([]);
   const [fileUploadPercentage, setFileUploadPercentage] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [uploadFinished, setUploadFinished] = useState(false);
+  const [resultMessage, setResultMessage] = useState({
+    status: '',
+    message: ''
+  });
+  const [uploadFinishedSuccessfully, setUploadFinishedSuccessfully] = useState(
+    false
+  );
   const [uploading, setUploading] = useState(false);
   const [userFieldsValid, setUserFieldsValid] = useState(false);
   const [ukupnoKomada, setUkupnoKomada] = useState(0);
@@ -108,19 +114,20 @@ export const FileUpload = () => {
   const OnSubmit = async e => {
     e.preventDefault();
     setUploading(true);
-    setSuccessMessage(null);
+    setResultMessage({ status: '', message: '' });
 
     const filesArr = Object.values(files);
-
+    const timestamp = Date.now();
+    const date = new Date()
+      .toLocaleString('en-GB', { dateStyle: 'short' })
+      .replaceAll('/', '.');
+    const folder = `orders/${date}/${userInfo.ime}_${userInfo.prezime}_${userInfo.format}_${userInfo.telefon}_${userInfo.preuzimanje}_${timestamp}`;
     let resProm = [];
 
     filesArr.forEach((item, index) => {
       const formData = new FormData();
       formData.append('file', item);
-      formData.append(
-        'folder',
-        `orders/${userInfo.ime}_${userInfo.prezime}_${userInfo.format}_${userInfo.telefon}_${userInfo.preuzimanje}`
-      );
+      formData.append('folder', `${folder}/x${item.brojKomada}`);
       formData.append('upload_preset', 'fotoart');
 
       resProm[index] = axios.post(
@@ -163,9 +170,12 @@ export const FileUpload = () => {
           };
           setUploadedFiles(uploadedFiles => [...uploadedFiles, newImage]);
         } catch (err) {
-          setUploadFinished(false);
+          setUploadFinishedSuccessfully(false);
           M.toast({ html: 'Došlo je do greške' });
-          setSuccessMessage('Došlo je do greške, pokušajte ponovo');
+          setResultMessage({
+            status: 'fail',
+            message: 'Došlo je do greške, pokušajte ponovo'
+          });
           setUploading(false);
           console.log(err);
           return;
@@ -187,17 +197,23 @@ export const FileUpload = () => {
         formData.set('format', userInfo.format);
         formData.set('preuzimanje', userInfo.preuzimanje);
         formData.set('photos', JSON.stringify(photos));
-
+        formData.set('folder', folder);
         await axios.post('/api/v1/orders', formData);
 
         M.toast({ html: 'Fotografije su sačuvane' });
-        setSuccessMessage('Vaša porudžbenica je uspešno sačuvana');
+        setResultMessage({
+          status: 'success',
+          message: `Vaša porudžbenica je uspešno sačuvana, dobićete email obaveštenje na adresi ${userInfo.email}`
+        });
         setUploading(false);
-        setUploadFinished(true);
+        setUploadFinishedSuccessfully(true);
       } catch (err) {
-        setUploadFinished(false);
+        setUploadFinishedSuccessfully(false);
         M.toast({ html: 'Došlo je do greške' });
-        setSuccessMessage('Došlo je do greške, pokušajte ponovo');
+        setResultMessage({
+          status: 'fail',
+          message: 'Došlo je do greške, pokušajte ponovo'
+        });
         setUploading(false);
         console.log(err);
       }
@@ -206,24 +222,38 @@ export const FileUpload = () => {
 
   return (
     <Fragment>
+      <div className="row center-align" style={{ marginTop: 20 }}>
+        {' '}
+        <div className="col s12">
+          {' '}
+          <img
+            className="responsive-img"
+            src={banner}
+            width="600px"
+            height="auto"
+          />
+        </div>
+      </div>
+
       <div className="container" style={{ fontFamily: 'Mulish' }}>
-        <br />
-        <br />
         <div className="row center-align">
-          <h6 style={{ color: '#707070', fontFamily: 'Mulish' }}>
+          <p
+            style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 17 }}
+          >
             Pošaljite fotografije i preuzmite ih u jednoj od naših radnji ili na
             kućnoj adresi
-          </h6>
+          </p>
         </div>
         <form onSubmit={OnSubmit}>
           {step === 1 && (
             <Fragment>
               <div className="row">
                 <div className="col s6 offset-s3 center-align">
-                  {!uploading && !uploadFinished && (
+                  {!uploading && !uploadFinishedSuccessfully && (
                     <Dropzone
                       setFilePreviews={setFilePreviews}
                       setFiles={setFiles}
+                      resizing={resizing}
                       setResizing={setResizing}
                       setResizeProgress={setResizeProgress}
                     />
@@ -242,16 +272,24 @@ export const FileUpload = () => {
                   </div>
                 )}
                 {!files[0] && !resizing && (
-                  <div className="col s4 offset-s4">
+                  <div className="col m4 offset-m4 s8 offset-s2 center-align">
                     <img
                       src={splashImage}
                       className="responsive-img"
                       alt="Splash image"
+                      height="320"
                     ></img>
                   </div>
                 )}
                 {resizing && (
-                  <div className=" col s4 offset-s4 center-align">
+                  <div
+                    className=" col s4 offset-s4 center-align"
+                    style={{ height: 320 }}
+                  >
+                    <br></br>
+                    <br></br>
+                    <br></br>
+                    <br></br>
                     <Spinner />
                     <div className="progress" style={{ marginBottom: 0 }}>
                       <div
@@ -270,36 +308,38 @@ export const FileUpload = () => {
                   </div>
                 )}
               </div>
-              <div className="row center-align" style={{ marginTop: 10 }}>
-                <div className="input-field col s3 offset-s3">
-                  <select
-                    defaultValue="13x18"
-                    onChange={e =>
-                      setUserInfo({ ...userInfo, format: e.target.value })
-                    }
-                  >
-                    <option value="9x13">9x13</option>
-                    <option value="10x13,5">10x13,5</option>
-                    <option value="10x15">10x15</option>
-                    <option value="11x15">11x15</option>
-                    <option value="13x18">13x18</option>
-                    <option value="15x20">15x20</option>
-                    <option value="20x30">20x30</option>
-                    <option value="24x30">24x30</option>
-                    <option value="30x40">30x40</option>
-                    <option value="30x45">30x45</option>
-                  </select>
-                  <label>Format</label>
+              {files[0] && (
+                <div className="row center-align" style={{ marginTop: 10 }}>
+                  <div className="input-field col s3 offset-s3">
+                    <select
+                      defaultValue={userInfo.format}
+                      onChange={e =>
+                        setUserInfo({ ...userInfo, format: e.target.value })
+                      }
+                    >
+                      <option value="9x13">9x13</option>
+                      <option value="10x13,5">10x13,5</option>
+                      <option value="10x15">10x15</option>
+                      <option value="11x15">11x15</option>
+                      <option value="13x18">13x18</option>
+                      <option value="15x20">15x20</option>
+                      <option value="20x30">20x30</option>
+                      <option value="24x30">24x30</option>
+                      <option value="30x40">30x40</option>
+                      <option value="30x45">30x45</option>
+                    </select>
+                    <label>Format</label>
+                  </div>
+                  <div className="input-field col s6">
+                    <button
+                      data-target="modal2"
+                      className=" btn-flat indigo-text modal-trigger"
+                    >
+                      Cene formata
+                    </button>
+                  </div>
                 </div>
-                <div className="input-field col s6">
-                  <button
-                    data-target="modal2"
-                    className=" btn-flat indigo-text modal-trigger"
-                  >
-                    Cene formata
-                  </button>
-                </div>
-              </div>
+              )}
             </Fragment>
           )}
 
@@ -319,7 +359,7 @@ export const FileUpload = () => {
                   <UserInfoFields
                     userInfo={userInfo}
                     setUserInfo={setUserInfo}
-                    uploadFinished={uploadFinished}
+                    uploadFinished={uploadFinishedSuccessfully}
                     uploading={uploading}
                   />
                 </div>
@@ -333,21 +373,21 @@ export const FileUpload = () => {
           )}
 
           <div className="row">
-            <div className="col s2 offset-s1" style={{ marginTop: 40 }}>
-              {step !== 1 && !uploadFinished && !uploading && (
+            <div className="col s2 offset-s1">
+              {step !== 1 && !uploadFinishedSuccessfully && !uploading && (
                 <button
                   className="btn-flat"
                   style={{ padding: 5 }}
                   onClick={e => prevStep(e)}
                 >
-                  <i class="material-icons left">arrow_back</i>
+                  <i className="material-icons left">arrow_back</i>
                   <span className="hide-on-med-and-down">Nazad</span>
                 </button>
               )}
             </div>
             <div className="col s4 offset-s2" style={{ color: 'grey' }}>
               {files[0] && (
-                <blockquote>
+                <blockquote style={{ marginTop: 0 }}>
                   <p style={{ marginBottom: 0, marginTop: 0 }}>
                     Broj fotografija: {ukupnoKomada}
                   </p>
@@ -364,7 +404,7 @@ export const FileUpload = () => {
               )}
             </div>
 
-            <div className="col s3" style={{ marginTop: 35 }}>
+            <div className="col s3">
               {step !== 3 && (
                 <button
                   className={`btn btn-large truncate ${
@@ -378,7 +418,7 @@ export const FileUpload = () => {
                   Dalje
                 </button>
               )}
-              {step === 3 && !uploading && !uploadFinished && (
+              {step === 3 && !uploading && !uploadFinishedSuccessfully && (
                 <button
                   className={`btn-large modal-trigger ${
                     !userFieldsValid ? 'disabled' : ''
@@ -406,13 +446,28 @@ export const FileUpload = () => {
             </div>
           )}
 
-          {successMessage && (
-            <div className="col s12 center-align indigo-text">
-              {' '}
-              <i className="material-icons" style={{ verticalAlign: '-6px' }}>
-                check
-              </i>
-              <i>{successMessage}</i>
+          {resultMessage.status === 'success' && (
+            <div className="row">
+              <div className="col s2 offset-s4 center-align">
+                {' '}
+                <img
+                  src={successImage}
+                  className="responsive-img"
+                  alt="Success image"
+                  height="230"
+                ></img>
+              </div>
+              <div className="col s4 indigo-text" style={{ marginTop: 20 }}>
+                <i>{resultMessage.message}</i>
+              </div>
+            </div>
+          )}
+
+          {resultMessage.status === 'fail' && (
+            <div className="row">
+              <div className="col s8 offset-s2 center-align pink-text">
+                <i style={{ marginTop: 30 }}>{resultMessage.message}</i>
+              </div>
             </div>
           )}
 
@@ -470,6 +525,9 @@ export const FileUpload = () => {
         )}
       </div>
 
+      <br></br>
+      <br></br>
+      <br></br>
       <CeneModal></CeneModal>
     </Fragment>
   );
