@@ -35,7 +35,7 @@ export default function Order({ order, setFetchAgainToggle }) {
   const downloadFiles = e => {
     e.preventDefault();
     axios({
-      url: `http://localhost:5000/download/${order.id}`,
+      url: `http://localhost:5000/api/v1/orders/download/${order.id}`,
       method: 'GET'
     }).then(response => {
       const link = document.createElement('a');

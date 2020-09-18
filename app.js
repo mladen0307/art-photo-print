@@ -47,19 +47,24 @@ app.use(zip());
 app.use(
   cors({
     credentials: true,
-    origin: 'http://localhost:3000'
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? 'https://fotoartnis.com/'
+        : 'http://localhost:3000'
   })
 );
 app.options(
   '*',
   cors({
     credentials: true,
-    origin: 'http://localhost:3000'
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? 'https://fotoartnis.com/'
+        : 'http://localhost:3000'
   })
 );
-
-app.post('/upload', orderController.upload);
-app.get('/download/:id', orderController.download);
+//upload to local endpoint
+//app.post('/upload', orderController.upload);
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
 

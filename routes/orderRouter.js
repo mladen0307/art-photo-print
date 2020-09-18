@@ -14,6 +14,9 @@ router
   .delete(authController.protect, orderController.deleteOrder);
 
 router
+  .route('/download/:id')
+  .get(authController.protect, orderController.download);
+router
   .route('/:id/sendEmail')
   .get(authController.protect, orderController.sendEmail);
 module.exports = router;
