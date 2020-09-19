@@ -31,6 +31,9 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+app.use(cors());
+app.options('*', cors());
+
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 
@@ -70,8 +73,6 @@ app.use(zip());
 //   })
 // );
 
-app.use(cors());
-app.options('*', cors());
 //upload to local endpoint
 //app.post('/upload', orderController.upload);
 app.use(express.static(path.join(__dirname, 'client/build')));
