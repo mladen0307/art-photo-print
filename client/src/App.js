@@ -4,7 +4,7 @@ import Overview from './components/Overview';
 import Nav from './components/Nav';
 import Login from './components/Login';
 import OrderDetails from './components/OrderDetails';
-import { HashRouter as Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import UserContext from './context/UserContext';
 import Footer from './components/Footer';
 
