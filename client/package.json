@@ -39,5 +39,5 @@
     ]
   },
   "proxy": "http://localhost:5000",
-  "homepage": "."
+  "homepage": "https://art-photo-print.herokuapp.com/"
 }
