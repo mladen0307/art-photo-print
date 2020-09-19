@@ -29,6 +29,7 @@ export default function Dropzone({
       setDragHover(false);
       setFiles([]);
       setLoading(true);
+      setLoadProgress({ count: 0, total: acceptedFiles.length });
       const files = await generatePreviews(acceptedFiles, count =>
         setLoadProgress({ count: count, total: acceptedFiles.length })
       );
