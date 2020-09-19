@@ -12,7 +12,6 @@ import Dropzone from './Dropzone';
 
 export const FileUpload = () => {
   const [files, setFiles] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploadPercentage, setUploadPercentage] = useState(0);
   const [resultMessage, setResultMessage] = useState('');
   const [uploadFinished, setUploadFinished] = useState(false);
@@ -81,7 +80,6 @@ export const FileUpload = () => {
         }
       });
 
-      setUploadedFiles(res.data.data.files);
       M.toast({ html: 'Fotografije su sačuvane' });
       setResultMessage('Vaša porudžbina je sačuvana');
       setUploading(false);
@@ -90,7 +88,7 @@ export const FileUpload = () => {
       M.toast({ html: 'Došlo je do greške' });
       setResultMessage('Došlo je do greške, pokušajte ponovo');
       setUploading(false);
-      console.log(err);
+      //console.log(err);
     }
   };
 

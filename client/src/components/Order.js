@@ -36,7 +36,8 @@ export default function Order({ order, setFetchAgainToggle }) {
     e.preventDefault();
     axios({
       url: `http://localhost:5000/api/v1/orders/download/${order.id}`,
-      method: 'GET'
+      method: 'GET',
+      withCredentials: true
     }).then(response => {
       const link = document.createElement('a');
       link.href = response.data.data.downloadLink;

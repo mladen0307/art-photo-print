@@ -9,6 +9,7 @@ import banner from '../photoprintbanner.jpg';
 import SmartGallery from 'react-smart-gallery';
 import Spinner from './Spinner';
 import Dropzone from './Dropzone';
+import resizeFile from '../helpers/resizeFile';
 
 import GallerySelector from './GallerySelector';
 import GalleryUploadProgress from './GalleryUploadProgress';
@@ -23,7 +24,6 @@ export const FileUpload = () => {
 
   const [files, setFiles] = useState([]);
   const [fileUploadPercentage, setFileUploadPercentage] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [resultMessage, setResultMessage] = useState({
     status: '',
     message: ''
@@ -32,10 +32,12 @@ export const FileUpload = () => {
     false
   );
   const [uploading, setUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [userFieldsValid, setUserFieldsValid] = useState(false);
   const [ukupnoKomada, setUkupnoKomada] = useState(0);
-  const [resizing, setResizing] = useState(false);
-  const [resizeProgress, setResizeProgress] = useState({ count: 0, total: 0 });
+  const [loading, setLoading] = useState(false);
+  const [loadProgress, setLoadProgress] = useState({ count: 0, total: 0 });
 
   const [userInfo, setUserInfo] = useState({
     ime: '',
@@ -74,14 +76,15 @@ export const FileUpload = () => {
     M.AutoInit();
   });
 
-  const [filePreviews, setFilePreviews] = useState([]);
-  useEffect(
-    () => () => {
-      // Make sure to revoke the data uris to avoid memory leaks
-      filePreviews.forEach(file => URL.revokeObjectURL(file.preview));
-    },
-    [filePreviews]
-  );
+  //Might leak without this idk
+  // const [filePreviews, setFilePreviews] = useState([]);
+  // useEffect(
+  //   () => () => {
+  //     // Make sure to revoke the data uris to avoid memory leaks
+  //     filePreviews.forEach(file => URL.revokeObjectURL(file.preview));
+  //   },
+  //   [filePreviews]
+  // );
 
   useEffect(() => {
     let newArray = [];
@@ -115,6 +118,8 @@ export const FileUpload = () => {
     e.preventDefault();
     setUploading(true);
     setResultMessage({ status: '', message: '' });
+    setUploadCount(`0/${files.length}`);
+    setUploadProgress(0);
 
     const filesArr = Object.values(files);
     const timestamp = Date.now();
@@ -123,52 +128,43 @@ export const FileUpload = () => {
       .replaceAll('/', '.');
     const folder = `orders/${date}/${userInfo.ime}_${userInfo.prezime}_${userInfo.format}_${userInfo.telefon}_${userInfo.preuzimanje}_${timestamp}`;
     let resProm = [];
-
-    filesArr.forEach((item, index) => {
-      const formData = new FormData();
-      formData.append('file', item);
-      formData.append('folder', `${folder}/x${item.brojKomada}`);
-      formData.append('upload_preset', 'fotoart');
-
-      resProm[index] = axios.post(
-        'https://api.cloudinary.com/v1_1/mladen0307/image/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          onUploadProgress: progressEvent => {
-            const newFileUploadPercentage = [...fileUploadPercentage];
-            newFileUploadPercentage.forEach((element, index) => {
-              if (element.name === item.name) {
-                element.value = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-                );
-              }
-            });
-
-            setFileUploadPercentage(newFileUploadPercentage);
-          },
-          withCredentials: false
-        }
-      );
-    });
-
     let res = [];
 
     (async function loop() {
-      for (let i = 0; i < resProm.length; i++) {
+      for (let i = 0; i < filesArr.length; i++) {
         try {
+          const file = await resizeFile(filesArr[i]);
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folder', `${folder}/x${file.brojKomada}`);
+          formData.append('upload_preset', 'fotoart');
+
+          resProm[i] = axios.post(
+            'https://api.cloudinary.com/v1_1/mladen0307/image/upload',
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              },
+              onUploadProgress: progressEvent => {
+                const newFileUploadPercentage = [...fileUploadPercentage];
+                newFileUploadPercentage.forEach(element => {
+                  if (element.name === file.name) {
+                    element.value = Math.round(
+                      (progressEvent.loaded * 100) / progressEvent.total
+                    );
+                  }
+                });
+
+                setFileUploadPercentage(newFileUploadPercentage);
+              },
+              withCredentials: false
+            }
+          );
           res[i] = await resProm[i];
-
           res[i].data.brojKomada = filesArr[i].brojKomada;
-
-          const newImage = {
-            src: res[i].data.secure_url,
-            width: res[i].data.width,
-            height: res[i].data.height
-          };
-          setUploadedFiles(uploadedFiles => [...uploadedFiles, newImage]);
+          setUploadCount(`${i + 1}/${filesArr.length}`);
+          setUploadProgress(Math.round(((i + 1) * 100) / filesArr.length));
         } catch (err) {
           setUploadFinishedSuccessfully(false);
           M.toast({ html: 'Došlo je do greške' });
@@ -177,7 +173,7 @@ export const FileUpload = () => {
             message: 'Došlo je do greške, pokušajte ponovo'
           });
           setUploading(false);
-          console.log(err);
+          //console.log(err);
           return;
         }
       }
@@ -198,7 +194,9 @@ export const FileUpload = () => {
         formData.set('preuzimanje', userInfo.preuzimanje);
         formData.set('photos', JSON.stringify(photos));
         formData.set('folder', folder);
-        await axios.post('/api/v1/orders', formData);
+        await axios.post('http://localhost:5000/api/v1/orders', formData, {
+          withCredentials: true
+        });
 
         M.toast({ html: 'Fotografije su sačuvane' });
         setResultMessage({
@@ -215,7 +213,7 @@ export const FileUpload = () => {
           message: 'Došlo je do greške, pokušajte ponovo'
         });
         setUploading(false);
-        console.log(err);
+        //console.log(err);
       }
     })();
   };
@@ -251,11 +249,11 @@ export const FileUpload = () => {
                 <div className="col s6 offset-s3 center-align">
                   {!uploading && !uploadFinishedSuccessfully && (
                     <Dropzone
-                      setFilePreviews={setFilePreviews}
+                      //setFilePreviews={setFilePreviews}
                       setFiles={setFiles}
-                      resizing={resizing}
-                      setResizing={setResizing}
-                      setResizeProgress={setResizeProgress}
+                      loading={loading}
+                      setLoading={setLoading}
+                      setLoadProgress={setLoadProgress}
                     />
                   )}
                 </div>
@@ -271,7 +269,7 @@ export const FileUpload = () => {
                     />
                   </div>
                 )}
-                {!files[0] && !resizing && (
+                {!files[0] && !loading && (
                   <div className="col m4 offset-m4 s8 offset-s2 center-align">
                     <img
                       src={splashImage}
@@ -281,7 +279,7 @@ export const FileUpload = () => {
                     ></img>
                   </div>
                 )}
-                {resizing && (
+                {loading && (
                   <div
                     className=" col s4 offset-s4 center-align"
                     style={{ height: 320 }}
@@ -296,14 +294,14 @@ export const FileUpload = () => {
                         className="determinate"
                         style={{
                           width: `${Math.floor(
-                            (resizeProgress.count * 100) / resizeProgress.total
+                            (loadProgress.count * 100) / loadProgress.total
                           )}%`
                         }}
                       ></div>
                     </div>
                     <p style={{ color: 'grey' }}>
                       <i>Učitavanje fajlova: </i>
-                      {resizeProgress.count}/{resizeProgress.total}
+                      {loadProgress.count}/{loadProgress.total}
                     </p>
                   </div>
                 )}
@@ -435,9 +433,24 @@ export const FileUpload = () => {
           </div>
 
           {uploading && (
-            <div className="progress">
-              <div className="indeterminate"></div>
-            </div>
+            <Fragment>
+              <div className="col s12 center-align">
+                <p style={{ color: 'grey', marginBottom: 0 }}>
+                  {uploadProgress}%
+                </p>
+              </div>
+              <div className="progress" style={{ marginBottom: 10 }}>
+                <div
+                  className="determinate"
+                  style={{
+                    width: `${uploadProgress}%`
+                  }}
+                ></div>
+              </div>
+              {/* <div className="col s12 center-align">
+                <p style={{ color: 'grey' }}>{uploadCount}</p>
+              </div> */}
+            </Fragment>
           )}
           {uploading && (
             <div className="col s12 center-align" style={{ color: 'grey' }}>

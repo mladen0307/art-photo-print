@@ -296,7 +296,7 @@ exports.uploadCloudinary = catchAsync(async (req, res, next) => {
           Order.findByIdAndDelete(newOrder.id);
           throw new AppError('Internal server error', 500);
         }
-        console.log(result);
+        //console.log(result);
       }
     );
   });

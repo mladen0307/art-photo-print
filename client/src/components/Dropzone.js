@@ -2,20 +2,22 @@ import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import uploadIcon from '../download.png';
 
-import resizeFiles from './../helpers/resizeFiles';
+import generatePreviews from './../helpers/generatePreviews';
 
 export default function Dropzone({
-  setFilePreviews,
+  //setFilePreviews,
   setFiles,
-  resizing,
-  setResizing,
-  setResizeProgress
+  loading,
+  setLoading,
+  setLoadProgress
 }) {
   const [dragHover, setDragHover] = useState(false);
   const { getRootProps, getInputProps } = useDropzone({
     accept: 'image/*',
-    noClick: resizing,
-    noDrag: resizing,
+    noClick: loading,
+    noDrag: loading,
+    noKeyboard: loading,
+    maxFiles: 3000,
     onDragEnter: () => {
       setDragHover(true);
     },
@@ -26,21 +28,23 @@ export default function Dropzone({
     onDrop: async acceptedFiles => {
       setDragHover(false);
       setFiles([]);
-      setResizing(true);
-      const resized = await resizeFiles(acceptedFiles, count =>
-        setResizeProgress({ count: count, total: acceptedFiles.length })
+      setLoading(true);
+      const files = await generatePreviews(acceptedFiles, count =>
+        setLoadProgress({ count: count, total: acceptedFiles.length })
       );
-      setResizing(false);
-      setFilePreviews(
-        resized.map(file =>
-          Object.assign(file, {
-            preview: URL.createObjectURL(file)
-          })
-        )
-      );
-      resized.forEach(file => (file.brojKomada = 1));
-      setFiles(resized);
-      //console.log(resized);
+      setLoading(false);
+
+      // setFilePreviews(
+      //   files.map(file =>
+      //     Object.assign(file, {
+
+      //       preview: URL.createObjectURL(file.thumbnail)
+      //     })
+      //   )
+      // );
+      files.forEach(file => (file.brojKomada = 1));
+      //console.log(files);
+      setFiles(files);
     }
   });
 

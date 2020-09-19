@@ -2,7 +2,7 @@ const express = require('express');
 const fileUpload = require('express-fileupload');
 const globalErrorHandler = require('./controllers/errorController');
 const orderRouter = require('./routes/orderRouter');
-const orderController = require('./controllers/orderController');
+const path = require('path');
 const AppError = require('./utils/appError');
 const cors = require('cors');
 const zip = require('express-easy-zip');
@@ -15,7 +15,11 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 
+const compression = require('compression');
+
 const app = express();
+
+app.enable('trust proxy');
 
 // Set security HTTP headers
 app.use(helmet());
@@ -38,6 +42,8 @@ app.use(xss());
 
 // Prevent parameter pollution
 app.use(hpp());
+
+app.use(compression());
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -63,8 +69,13 @@ app.options(
         : 'http://localhost:3000'
   })
 );
+
 //upload to local endpoint
 //app.post('/upload', orderController.upload);
+app.use(express.static(path.join(__dirname, 'client/build')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
 

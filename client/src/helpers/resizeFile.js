@@ -1,7 +1,7 @@
 import { readAndCompressImage } from 'browser-image-resizer';
 
 const config = {
-  quality: 0.7,
+  quality: 0.6,
   maxWidth: 3000,
   maxHeight: 3000
 };
@@ -23,4 +23,17 @@ const resizeFiles = async (files, callback) => {
   return compressed;
 };
 
-export default resizeFiles;
+const resizeFile = async file => {
+  if (file.size < 5242880) {
+    return file;
+  } else {
+    const compressed = await readAndCompressImage(file, config);
+    compressed.name = file.name;
+    compressed.lastModified = file.lastModified;
+    compressed.path = file.path;
+    compressed.brojKomada = file.brojKomada;
+    return compressed;
+  }
+};
+
+export default resizeFile;
