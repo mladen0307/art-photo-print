@@ -7,7 +7,7 @@ export default function Order({ order, setFetchAgainToggle }) {
 
   useEffect(() => {
     axios({
-      url: `http://localhost:5000/api/v1/orders/${order.id}`,
+      url: `https://art-photo-print.herokuapp.com/api/v1/orders/${order.id}`,
       method: 'PATCH',
       data: {
         izdato: izdato
@@ -19,7 +19,7 @@ export default function Order({ order, setFetchAgainToggle }) {
   const downloadFilesOld = e => {
     e.preventDefault();
     axios({
-      url: `http://localhost:5000/download/${order.id}`,
+      url: `https://art-photo-print.herokuapp.com/download/${order.id}`,
       method: 'GET',
       responseType: 'blob'
     }).then(response => {
@@ -35,7 +35,7 @@ export default function Order({ order, setFetchAgainToggle }) {
   const downloadFiles = e => {
     e.preventDefault();
     axios({
-      url: `http://localhost:5000/api/v1/orders/download/${order.id}`,
+      url: `https://art-photo-print.herokuapp.com/api/v1/orders/download/${order.id}`,
       method: 'GET',
       withCredentials: true
     }).then(response => {
@@ -49,7 +49,7 @@ export default function Order({ order, setFetchAgainToggle }) {
 
   const posaljiEmail = e => {
     axios({
-      url: `http://localhost:5000/api/v1/orders/${order.id}/sendEmail`,
+      url: `https://art-photo-print.herokuapp.com/api/v1/orders/${order.id}/sendEmail`,
       method: 'GET',
       withCredentials: true
     }).then(response => {
@@ -61,7 +61,7 @@ export default function Order({ order, setFetchAgainToggle }) {
     e.preventDefault();
     if (brojKesice.length < 4) return;
     axios({
-      url: `http://localhost:5000/api/v1/orders/${order.id}`,
+      url: `https://art-photo-print.herokuapp.com/api/v1/orders/${order.id}`,
       method: 'PATCH',
       data: {
         brojKesice: brojKesice
@@ -75,7 +75,7 @@ export default function Order({ order, setFetchAgainToggle }) {
   const obrisiFotografije = e => {
     e.preventDefault();
     axios({
-      url: `http://localhost:5000/api/v1/orders/${order.id}`,
+      url: `https://art-photo-print.herokuapp.com/api/v1/orders/${order.id}`,
       method: 'DELETE',
       withCredentials: true
     }).then(response => {

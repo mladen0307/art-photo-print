@@ -37,7 +37,7 @@ export default function useFetchOrders(page, limit, fetchAgainToggle) {
 
     axios
       .get(
-        'http://localhost:5000/api/v1/orders',
+        'https://art-photo-print.herokuapp.com/api/v1/orders',
         {
           cancelToken: cancelToken1.token,
           params: {
@@ -61,7 +61,7 @@ export default function useFetchOrders(page, limit, fetchAgainToggle) {
     const cancelToken2 = axios.CancelToken.source();
     axios
       .get(
-        'http://localhost:5000/api/v1/orders',
+        'https://art-photo-print.herokuapp.com/api/v1/orders',
         {
           cancelToken: cancelToken2.token,
           params: {
