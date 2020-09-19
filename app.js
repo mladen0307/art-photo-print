@@ -84,7 +84,7 @@ app.use(express.static(path.join(__dirname, 'client/build')));
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'app.html'));
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
 // app.all('*', (req, res, next) => {
