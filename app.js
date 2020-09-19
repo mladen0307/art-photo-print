@@ -49,7 +49,7 @@ app.use(hpp());
 app.use(compression());
 
 app.use(express.json());
-app.use(express.static('public'));
+//app.use(express.static('public'));
 app.use(cookieParser());
 app.use(fileUpload());
 app.use(zip());
