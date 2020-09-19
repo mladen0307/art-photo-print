@@ -50,26 +50,28 @@ app.use(express.static('public'));
 app.use(cookieParser());
 app.use(fileUpload());
 app.use(zip());
-app.use(
-  cors({
-    credentials: true,
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? 'https://fotoartnis.com/'
-        : 'http://localhost:3000'
-  })
-);
-app.options(
-  '*',
-  cors({
-    credentials: true,
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? 'https://fotoartnis.com/'
-        : 'http://localhost:3000'
-  })
-);
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin:
+//       process.env.NODE_ENV === 'production'
+//         ? 'https://fotoartnis.com/'
+//         : 'http://localhost:3000'
+//   })
+// );
+// app.options(
+//   '*',
+//   cors({
+//     credentials: true,
+//     origin:
+//       process.env.NODE_ENV === 'production'
+//         ? 'https://fotoartnis.com/'
+//         : 'http://localhost:3000'
+//   })
+// );
 
+app.use(cors());
+app.options('*', cors());
 //upload to local endpoint
 //app.post('/upload', orderController.upload);
 app.use(express.static(path.join(__dirname, 'client/build')));
