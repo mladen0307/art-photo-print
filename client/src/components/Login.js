@@ -10,7 +10,7 @@ export default function Login() {
 
     axios
       .post(
-        'https://art-photo-print.herokuapp.com/api/v1/users/login',
+        '/api/v1/users/login',
         {
           email: email,
           password: password

@@ -194,13 +194,9 @@ export const FileUpload = () => {
         formData.set('preuzimanje', userInfo.preuzimanje);
         formData.set('photos', JSON.stringify(photos));
         formData.set('folder', folder);
-        await axios.post(
-          'https://art-photo-print.herokuapp.com/api/v1/orders',
-          formData,
-          {
-            withCredentials: true
-          }
-        );
+        await axios.post('/api/v1/orders', formData, {
+          withCredentials: true
+        });
 
         M.toast({ html: 'Fotografije su sačuvane' });
         setResultMessage({
