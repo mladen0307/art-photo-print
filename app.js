@@ -72,12 +72,16 @@ app.use(zip());
 
 app.use(cors());
 app.options('*', cors());
+app.use(function(req, res, next) {
+  res.setHeader('Content-Security-Policy', "img-src 'self' data: blob:;");
+  return next();
+});
 
 //upload to local endpoint
 //app.post('/upload', orderController.upload);
 app.use(express.static(path.join(__dirname, 'client/build')));
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'client/build', 'app.html'));
 });
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
