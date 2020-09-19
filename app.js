@@ -80,11 +80,12 @@ app.use(function(req, res, next) {
 //upload to local endpoint
 //app.post('/upload', orderController.upload);
 app.use(express.static(path.join(__dirname, 'client/build')));
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'app.html'));
-});
+
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'app.html'));
+});
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
