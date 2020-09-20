@@ -51,13 +51,15 @@ const Overview = () => {
         )}
         {error && <h2>Error</h2>}
         <div className="row">
-          {orders.map(order => (
-            <Order
-              key={order.id}
-              order={order}
-              setFetchAgainToggle={setFetchAgainToggle}
-            />
-          ))}
+          <div className="col s8 offset-s2">
+            {orders.map(order => (
+              <Order
+                key={order.id}
+                order={order}
+                setFetchAgainToggle={setFetchAgainToggle}
+              />
+            ))}
+          </div>
         </div>
         <OrdersPagination
           page={page}

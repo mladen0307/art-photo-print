@@ -7,7 +7,7 @@ export default function Login() {
 
   const OnSubmit = async e => {
     e.preventDefault();
-
+    setStatus('Logging in...');
     axios
       .post(
         '/api/v1/users/login',
@@ -25,7 +25,8 @@ export default function Login() {
       .catch(function(error) {
         if (error.response) {
           // Request made and server responded
-          setStatus(error.response.data.message);
+          //setStatus(error.response.data.message);
+          setStatus('Incorrect email or password');
         } else if (error.request) {
           // The request was made but no response was received
           setStatus('Login failed, please try again');
