@@ -16,6 +16,10 @@ const generatePreviews = async (files, callback) => {
     );
     callback(i + 1);
   }
+  //wierd bug with 1st file beeing stretched
+  newFiles[0].preview = URL.createObjectURL(
+    await readAndCompressImage(newFiles[0], configThumb)
+  );
   return newFiles;
 };
 
