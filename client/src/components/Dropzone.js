@@ -6,11 +6,18 @@ import generatePreviews from './../helpers/generatePreviews';
 
 export default function Dropzone({
   //setFilePreviews,
+  files,
   setFiles,
   loading,
   setLoading,
   setLoadProgress
 }) {
+  const revokeURLs = () => {
+    files.forEach(file => {
+      URL.revokeObjectURL(file.fullRes);
+      URL.revokeObjectURL(file.preview);
+    });
+  };
   const [dragHover, setDragHover] = useState(false);
   const { getRootProps, getInputProps } = useDropzone({
     accept: 'image/*',
@@ -27,6 +34,7 @@ export default function Dropzone({
     //maxSize: 10485760,
     onDrop: async acceptedFiles => {
       setDragHover(false);
+      revokeURLs();
       setFiles([]);
       setLoading(true);
       setLoadProgress({ count: 0, total: acceptedFiles.length });

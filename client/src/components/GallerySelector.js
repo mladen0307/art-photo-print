@@ -1,8 +1,23 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import RemovePhotoModal from './RemovePhotoModal';
+import Lightbox from 'react-image-lightbox';
+import 'react-image-lightbox/style.css';
 
 const GallerySelector = ({ files, setFiles }) => {
   //const [displayedFiles, setDisplayedFiles] = useState(24);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxFileIndex, setLightboxFileIndex] = useState(null);
+
+  const onKeyDown = e => {
+    if (e.type === 'keydown' && isLightboxOpen) {
+      if (e.key === 'ArrowUp') {
+        incrementPhoto(e, files[lightboxFileIndex].name);
+      }
+      if (e.key === 'ArrowDown') {
+        decrementPhoto(e, files[lightboxFileIndex].name);
+      }
+    }
+  };
 
   const incrementPhoto = (e, name) => {
     e.preventDefault();
@@ -37,6 +52,13 @@ const GallerySelector = ({ files, setFiles }) => {
     const newFiles = [...files];
     newFiles.splice(index, 1);
     setFiles(newFiles);
+    if (newFiles.length === 0) {
+      setIsLightboxOpen(false);
+    } else {
+      setLightboxFileIndex(
+        (lightboxFileIndex + newFiles.length - 1) % newFiles.length
+      );
+    }
   };
 
   return (
@@ -53,6 +75,62 @@ const GallerySelector = ({ files, setFiles }) => {
           Izaberite broj fotografija:
         </p>
       </div>
+      {isLightboxOpen && (
+        <Lightbox
+          mainSrc={files[lightboxFileIndex].fullRes}
+          nextSrc={files[(lightboxFileIndex + 1) % files.length].fullRes}
+          prevSrc={
+            files[(lightboxFileIndex + files.length - 1) % files.length].fullRes
+          }
+          onCloseRequest={() => setIsLightboxOpen(false)}
+          onMovePrevRequest={() =>
+            setLightboxFileIndex(
+              (lightboxFileIndex + files.length - 1) % files.length
+            )
+          }
+          onMoveNextRequest={() =>
+            setLightboxFileIndex((lightboxFileIndex + 1) % files.length)
+          }
+          imageTitle={'        ' + files[lightboxFileIndex].name}
+          enableZoom={false}
+          onKeyEvent={e => onKeyDown(e)}
+          imageCaption={
+            <div>
+              {files[lightboxFileIndex].brojKomada > 1 && (
+                <button
+                  className="btn-flat"
+                  style={{ fontWeight: 'bold' }}
+                  onClick={e =>
+                    decrementPhoto(e, files[lightboxFileIndex].name)
+                  }
+                >
+                  <i className="tiny material-icons white-text">remove</i>
+                </button>
+              )}
+              {files[lightboxFileIndex].brojKomada === 1 && (
+                <button
+                  className="btn-flat modal-trigger"
+                  style={{ fontWeight: 'bold' }}
+                  data-target={`removePhotoModal${lightboxFileIndex}`}
+                >
+                  <i className="tiny material-icons white-text">remove</i>
+                </button>
+              )}
+
+              {files[lightboxFileIndex].brojKomada}
+              <button
+                className="btn-flat tooltipped"
+                data-position="top"
+                data-tooltip="Prečice na tastaturi: 🡰 🡲 🡱 🡳  "
+                style={{ fontWeight: 'bold' }}
+                onClick={e => incrementPhoto(e, files[lightboxFileIndex].name)}
+              >
+                <i className="tiny material-icons white-text">add</i>
+              </button>
+            </div>
+          }
+        />
+      )}
       <div
         className="row scroll1"
         style={{
@@ -62,7 +140,8 @@ const GallerySelector = ({ files, setFiles }) => {
           flexWrap: 'wrap',
           overflowY: 'auto',
           maxHeight: 450,
-          justifyContent: 'flex-start'
+          justifyContent: 'flex-start',
+          backgroundColor: '#f5f5f5'
         }}
         //onScroll={e => handleScroll(e)}
       >
@@ -77,6 +156,7 @@ const GallerySelector = ({ files, setFiles }) => {
               ></RemovePhotoModal>
               <div style={{ zIndex: -100 }}>
                 <img
+                  className="selectGalleryImage"
                   src={file.preview}
                   loading="lazy"
                   style={{
@@ -84,6 +164,10 @@ const GallerySelector = ({ files, setFiles }) => {
                     height: 150,
                     objectFit: 'cover',
                     zIndex: -100
+                  }}
+                  onClick={() => {
+                    setIsLightboxOpen(true);
+                    setLightboxFileIndex(index);
                   }}
                 />
               </div>

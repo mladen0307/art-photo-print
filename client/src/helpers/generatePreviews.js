@@ -11,6 +11,7 @@ const generatePreviews = async (files, callback) => {
   callback(0);
   for (let i = 0; i < files.length; i++) {
     newFiles[i] = files[i];
+    newFiles[i].fullRes = URL.createObjectURL(files[i]);
     newFiles[i].preview = URL.createObjectURL(
       await readAndCompressImage(newFiles[i], configThumb)
     );

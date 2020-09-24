@@ -250,6 +250,7 @@ export const FileUpload = () => {
                   {!uploading && !uploadFinishedSuccessfully && (
                     <Dropzone
                       //setFilePreviews={setFilePreviews}
+                      files={files}
                       setFiles={setFiles}
                       loading={loading}
                       setLoading={setLoading}
@@ -263,7 +264,10 @@ export const FileUpload = () => {
                   <div className="col s12">
                     <SmartGallery
                       rootStyle={{ margin: 'auto' }}
-                      images={files.map(file => file.preview)}
+                      images={files.map((file, index) => {
+                        if (index > 4) return file.preview;
+                        else return file.fullRes;
+                      })}
                       width={320}
                       height={320}
                     />
