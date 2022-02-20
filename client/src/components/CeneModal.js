@@ -11,9 +11,9 @@ const CeneModal = () => {
             <tr>
               <th>veličina formata</th>
               <th>cena u din.</th>
-              <th> >100 fotografija</th>
-              <th> >200 fotografija</th>
-              <th> >400 fotografija</th>
+              <th> {">"}100 fotografija</th>
+              <th> {">"}200 fotografija</th>
+              <th> {">"}400 fotografija</th>
             </tr>
           </thead>
           <tbody>

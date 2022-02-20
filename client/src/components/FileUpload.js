@@ -4,7 +4,8 @@ import axios from 'axios';
 import UserInfoFields from './UserInfoFields';
 import splashImage from '../image_upload.png';
 import successImage from '../saved_success.png';
-import banner from '../photoprintbanner.jpg';
+import banner from '../photoprintbanner.png';
+import formatiImage from '../print-sizes-min.png';
 
 import SmartGallery from 'react-smart-gallery';
 import Spinner from './Spinner';
@@ -130,81 +131,41 @@ export const FileUpload = () => {
     let resProm = [];
     let res = [];
 
-    (async function loop() {
-      for (let i = 0; i < filesArr.length; i++) {
-        try {
-          const file = await resizeFile(filesArr[i]);
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('folder', `${folder}/x${file.brojKomada}`);
-          formData.append('upload_preset', 'fotoart');
-
-          resProm[i] = axios.post(
-            'https://api.cloudinary.com/v1_1/mladen0307/image/upload',
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data'
-              },
-              onUploadProgress: progressEvent => {
-                const newFileUploadPercentage = [...fileUploadPercentage];
-                newFileUploadPercentage.forEach(element => {
-                  if (element.name === file.name) {
-                    element.value = Math.round(
-                      (progressEvent.loaded * 100) / progressEvent.total
-                    );
-                  }
-                });
-
-                setFileUploadPercentage(newFileUploadPercentage);
-              },
-              withCredentials: false
-            }
-          );
-          res[i] = await resProm[i];
-          res[i].data.brojKomada = filesArr[i].brojKomada;
-          setUploadCount(`${i + 1}/${filesArr.length}`);
-          setUploadProgress(Math.round(((i + 1) * 100) / filesArr.length));
-        } catch (err) {
-          setUploadFinishedSuccessfully(false);
-          M.toast({ html: 'Došlo je do greške' });
-          setResultMessage({
-            status: 'fail',
-            message: 'Došlo je do greške, pokušajte ponovo'
-          });
-          setUploading(false);
-          //console.log(err);
-          return;
-        }
-      }
+    
+    for (let i = 0; i < filesArr.length; i++) {
       try {
-        let photos = res.map(res => ({
-          secure_url: res.data.secure_url,
-          public_id: res.data.public_id,
-          brojKomada: res.data.brojKomada
-        }));
-
+        const file = await resizeFile(filesArr[i]);
         const formData = new FormData();
-        formData.set('ime', userInfo.ime);
-        formData.set('prezime', userInfo.prezime);
-        formData.set('telefon', userInfo.telefon);
-        formData.set('email', userInfo.email);
-        formData.set('adresa', userInfo.adresa);
-        formData.set('format', userInfo.format);
-        formData.set('preuzimanje', userInfo.preuzimanje);
-        formData.set('photos', JSON.stringify(photos));
-        formData.set('folder', folder);
-        await axios.post('/api/v1/orders', formData, {
-          withCredentials: true
-        });
+        formData.append('file', file);
+        formData.append('folder', `${folder}/x${file.brojKomada}`);
+        formData.append('upload_preset', 'fotoart');
 
-        M.toast({ html: 'Fotografije su sačuvane' });
-        setResultMessage({
-          status: 'success',
-          message: `Vaša porudžbenica je uspešno sačuvana, dobićete email obaveštenje na adresi ${userInfo.email}`
-        });
-        setUploading(false);
-        setUploadFinishedSuccessfully(true);
+        resProm[i] = axios.post(
+          'https://api.cloudinary.com/v1_1/mladen0307/image/upload',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: progressEvent => {
+              const newFileUploadPercentage = [...fileUploadPercentage];
+              newFileUploadPercentage.forEach(element => {
+                if (element.name === file.name) {
+                  element.value = Math.round(
+                    (progressEvent.loaded * 100) / progressEvent.total
+                  );
+                }
+              });
+
+              setFileUploadPercentage(newFileUploadPercentage);
+            },
+            withCredentials: false
+          }
+        );
+        res[i] = await resProm[i];
+        res[i].data.brojKomada = filesArr[i].brojKomada;
+        setUploadCount(`${i + 1}/${filesArr.length}`);
+        setUploadProgress(Math.round(((i + 1) * 100) / filesArr.length));
       } catch (err) {
         setUploadFinishedSuccessfully(false);
         M.toast({ html: 'Došlo je do greške' });
@@ -214,8 +175,48 @@ export const FileUpload = () => {
         });
         setUploading(false);
         //console.log(err);
+        return;
       }
-    })();
+    }
+    try {
+      let photos = res.map(res => ({
+        secure_url: res.data.secure_url,
+        public_id: res.data.public_id,
+        brojKomada: res.data.brojKomada
+      }));
+
+      const formData = new FormData();
+      formData.set('ime', userInfo.ime);
+      formData.set('prezime', userInfo.prezime);
+      formData.set('telefon', userInfo.telefon);
+      formData.set('email', userInfo.email);
+      formData.set('adresa', userInfo.adresa);
+      formData.set('format', userInfo.format);
+      formData.set('preuzimanje', userInfo.preuzimanje);
+      formData.set('photos', JSON.stringify(photos));
+      formData.set('folder', folder);
+      await axios.post('/api/v1/orders', formData, {
+        withCredentials: true
+      });
+
+      M.toast({ html: 'Fotografije su sačuvane' });
+      setResultMessage({
+        status: 'success',
+        message: `Vaša porudžbenica je uspešno sačuvana, dobićete email obaveštenje na adresi ${userInfo.email}`
+      });
+      setUploading(false);
+      setUploadFinishedSuccessfully(true);
+    } catch (err) {
+      setUploadFinishedSuccessfully(false);
+      M.toast({ html: 'Došlo je do greške' });
+      setResultMessage({
+        status: 'fail',
+        message: 'Došlo je do greške, pokušajte ponovo'
+      });
+      setUploading(false);
+      //console.log(err);
+    }
+    
   };
 
   return (
@@ -234,17 +235,79 @@ export const FileUpload = () => {
       </div>
 
       <div className="container" style={{ fontFamily: 'Mulish' }}>
+      {step === 1 && (
         <div className="row center-align">
           <p
-            style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 17 }}
+            style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 18 }}
           >
-            Pošaljite fotografije i preuzmite ih u jednoj od naših radnji ili na
-            kućnoj adresi
+            Pošaljite fotografije I stižu Vam u roku od par dana na kućnu adresu.
           </p>
-        </div>
+        </div>)}
+        {step === 1 && (
+        <div className="row center-align">
+       
+          {' '}
+          <img
+            className="responsive-img"
+            src={formatiImage}
+            width="520px"
+            height="auto"
+          />
+        
+        </div>)}
+
+        
+
         <form onSubmit={OnSubmit}>
           {step === 1 && (
             <Fragment>
+              
+              
+  
+            
+            
+             
+  
+            
+              <div className="row center-align" style={{ marginTop: 10 }}>
+              <div className="input-field col s2 offset-s4">
+              <p
+            style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 18 }}
+          >
+            Izaberite format
+          </p>
+              </div>
+                  <div className="input-field col s2">
+                    <select
+                      defaultValue={userInfo.format}
+                      onChange={e =>
+                        setUserInfo({ ...userInfo, format: e.target.value })
+                      }
+                    >
+                      <option value="9x13">9x13</option>
+                      {/* <option value="10x13,5">10x13,5</option> */}
+                      <option value="10x15">10x15</option>
+                      {/* <option value="11x15">11x15</option> */}
+                      <option value="13x18">13x18</option>
+                      {/* <option value="15x20">15x20</option> */}
+                      <option value="15x21">15x21</option>
+                      <option value="20x30">20x30</option>
+                      {/* <option value="24x30">24x30</option> */}
+                      {/* <option value="30x40">30x40</option> */}
+                      {/* <option value="30x45">30x45</option> */}
+                    </select>
+                    <label>Format</label>
+                  </div>
+                  {/* <div className="input-field col s6">
+                    <button
+                      data-target="modal2"
+                      className=" btn-flat indigo-text modal-trigger"
+                    >
+                      Cene formata
+                    </button>
+                  </div> */}
+                </div>
+
               <div className="row">
                 <div className="col s6 offset-s3 center-align">
                   {!uploading && !uploadFinishedSuccessfully && (
@@ -310,38 +373,9 @@ export const FileUpload = () => {
                   </div>
                 )}
               </div>
-              {files[0] && (
-                <div className="row center-align" style={{ marginTop: 10 }}>
-                  <div className="input-field col s3 offset-s3">
-                    <select
-                      defaultValue={userInfo.format}
-                      onChange={e =>
-                        setUserInfo({ ...userInfo, format: e.target.value })
-                      }
-                    >
-                      <option value="9x13">9x13</option>
-                      <option value="10x13,5">10x13,5</option>
-                      <option value="10x15">10x15</option>
-                      <option value="11x15">11x15</option>
-                      <option value="13x18">13x18</option>
-                      <option value="15x20">15x20</option>
-                      <option value="20x30">20x30</option>
-                      <option value="24x30">24x30</option>
-                      <option value="30x40">30x40</option>
-                      <option value="30x45">30x45</option>
-                    </select>
-                    <label>Format</label>
-                  </div>
-                  <div className="input-field col s6">
-                    <button
-                      data-target="modal2"
-                      className=" btn-flat indigo-text modal-trigger"
-                    >
-                      Cene formata
-                    </button>
-                  </div>
-                </div>
-              )}
+              
+                
+              
             </Fragment>
           )}
 
