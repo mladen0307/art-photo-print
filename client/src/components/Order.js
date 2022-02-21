@@ -1,5 +1,6 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import axios from 'axios';
+import SmartGallery from 'react-smart-gallery';
 
 export default function Order({ order, setFetchAgainToggle }) {
   const [izdato, setIzdato] = useState(order.izdato);
@@ -85,13 +86,13 @@ export default function Order({ order, setFetchAgainToggle }) {
 
   return (
     <div className="col s12">
-      <div className="card grey lighten-3">
+      <div className={`card ${izdato? 'grey' : 'white'} lighten-3`}>
         <div className="card-content" style={{ paddingBottom: 0 }}>
           <span className="card-title">
             {order.ime + ' ' + order.prezime} - {order.preuzimanje}
           </span>
           <div className="row">
-            <div className="col s7">
+            <div className="col s6">
               {new Date(order.createdAt).toLocaleString('en-GB')}
               <br />
               <br />
@@ -123,8 +124,7 @@ export default function Order({ order, setFetchAgainToggle }) {
               )}
               <br />
               za naplatu: {order.racun} rsd {order.adresa && '+poštarina'}
-            </div>
-            <div className="col s5">
+              <br />              
               {order.brojKesice ? (
                 <h6 style={{ color: 'grey' }}>
                   Broj kesice: {order.brojKesice}
@@ -153,22 +153,36 @@ export default function Order({ order, setFetchAgainToggle }) {
                   )}
                 </form>
               )}
+              
               <br />
               {!order.poslatEmail ? (
                 order.brojKesice && (
+                  <Fragment>
                   <button
                     className="waves-effect waves-light btn-small"
                     onClick={e => posaljiEmail(e)}
                   >
                     pošalji email
                   </button>
+                  <br/>
+                  </Fragment>
                 )
               ) : (
                 <p style={{ color: 'grey' }}>Email obaveštenje je poslato</p>
-              )}
-              <br />
-              <br />
-              <p>
+              )}             
+             
+            </div>
+            <div className="col s6"> 
+            {!order.obrisano && (            
+              <SmartGallery
+                rootStyle={{ margin: 'auto' }}
+                images={order.photos.map(photo => photo.secure_url)}
+                width={270}
+                height={270}
+              />)}
+             
+              <p className="right">
+              <br />             
                 <label>
                   <input
                     type="checkbox"

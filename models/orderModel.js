@@ -55,6 +55,7 @@ const orderSchema = new mongoose.Schema(
         '11x15',
         '13x18',
         '15x20',
+        '15x21',
         '20x30',
         '24x30',
         '30x40',
