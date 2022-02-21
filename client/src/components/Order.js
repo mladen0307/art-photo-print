@@ -176,7 +176,7 @@ export default function Order({ order, setFetchAgainToggle }) {
             {!order.obrisano && (            
               <SmartGallery
                 rootStyle={{ margin: 'auto' }}
-                images={order.photos.map(photo => photo.secure_url)}
+                images={order.photos.map(photo => photo.url)}
                 width={270}
                 height={270}
               />)}

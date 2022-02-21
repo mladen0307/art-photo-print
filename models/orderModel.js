@@ -39,6 +39,7 @@ const orderSchema = new mongoose.Schema(
     },
     photos: [
       {
+        url: String,
         secure_url: String,
         public_id: { type: String, unique: true },
         brojKomada: Number

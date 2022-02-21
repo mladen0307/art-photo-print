@@ -162,7 +162,7 @@ export const FileUpload = () => {
             withCredentials: false
           }
         );
-        res[i] = await resProm[i];
+        res[i] = await resProm[i];        
         res[i].data.brojKomada = filesArr[i].brojKomada;
         setUploadCount(`${i + 1}/${filesArr.length}`);
         setUploadProgress(Math.round(((i + 1) * 100) / filesArr.length));
@@ -180,6 +180,7 @@ export const FileUpload = () => {
     }
     try {
       let photos = res.map(res => ({
+        url: res.data.url,
         secure_url: res.data.secure_url,
         public_id: res.data.public_id,
         brojKomada: res.data.brojKomada
