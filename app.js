@@ -73,7 +73,7 @@ app.use(zip());
 //app.use(cors());
 //app.options('*', cors());
 app.use(function(req, res, next) {
-  res.setHeader('Content-Security-Policy', "img-src 'self' data: blob:;");
+  res.setHeader('Content-Security-Policy', "img-src * data: blob:;");
   return next();
 });
 
