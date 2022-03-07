@@ -92,11 +92,17 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
 
 exports.createOrder = catchAsync(async (req, res, next) => {
   req.body.photos = JSON.parse(req.body.photos);
+  req.body.downloadLink = cloudinary.utils.download_zip_url({
+    //public_ids: order.photos.map(photo => photo.public_id),
+    prefixes: req.body.folder,
+    resource_type: 'image',
+    mode: 'download'
+  });
 
   const newOrder = await Order.create(req.body);
 
   //send email to user
-  const email = new Email(newOrder.email);
+  const  email = new Email(newOrder.email);
   const emailData = {
     title: 'Vaša porudžbenica je u obradi',
     order: newOrder
@@ -113,7 +119,14 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     title: 'Nova porudžbenica',
     order: newOrder
   };
-  await email2.send('email', 'Foto Art - Nova porudžbenica', emailData2);
+  await email2.send('emailAdmin', `Foto Art - Nova porudžbenica ${newOrder.ime} ${newOrder.prezime}`, emailData2);
+
+  const email3 = new Email('foto.art.nis@hotmail.com');
+  const emailData3 = {
+    title: 'Nova porudžbenica',
+    order: newOrder
+  };
+  await email3.send('emailAdmin', `Foto Art - Nova porudžbenica ${newOrder.ime} ${newOrder.prezime}`, emailData3);
 
   res.status(201).json({
     status: 'success',

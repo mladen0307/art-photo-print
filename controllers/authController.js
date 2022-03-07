@@ -65,6 +65,20 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, req, res);
 });
 
+//not tested
+exports.logout = catchAsync(async (req, res, next) => {
+  const cookieOptions = {    
+    httpOnly: true,
+    //secure: 'https'
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https'
+  };
+  res.clearCookie('jwt', cookieOptions);
+  res.status(200).json({
+    status: 'success'
+  });
+  
+})
+
 exports.protect = catchAsync(async (req, res, next) => {
   const token = req.cookies.jwt;
 
@@ -75,6 +89,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
+  //will throw error if validation fails
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3) Check if user still exists
@@ -82,7 +97,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!currentUser) {
     return next(
       new AppError(
-        'The user belonging to this token does no longer exist.',
+        'The user belonging to this token no longer exists.',
         401
       )
     );
