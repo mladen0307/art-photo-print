@@ -1,24 +1,24 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import axios from 'axios';
 
-import UserInfoFields from './UserInfoFields';
+import UserInfoFields from '../components/UserInfoFields';
 import splashImage from '../image_upload.png';
 import successImage from '../saved_success.png';
 import banner from '../photoprintbanner.png';
 import formatiImage from '../print-sizes-min.png';
 
 import SmartGallery from 'react-smart-gallery';
-import Spinner from './Spinner';
-import Dropzone from './Dropzone';
+import Spinner from '../layout/Spinner';
+import Dropzone from '../components/Dropzone';
 import resizeFile from '../helpers/resizeFile';
 
-import GallerySelector from './GallerySelector';
-import GalleryUploadProgress from './GalleryUploadProgress';
-import CeneModal from './CeneModal';
+import GallerySelector from '../components/GallerySelector';
+import GalleryUploadProgress from '../components/GalleryUploadProgress';
+import CeneModal from '../components/CeneModal';
 
 import M from 'materialize-css';
 
-import cene from './../helpers/cene';
+import cene from '../helpers/cene';
 
 export const FileUpload = () => {
   const [step, setStep] = useState(1);
@@ -257,48 +257,38 @@ export const FileUpload = () => {
         
         </div>)}
 
-        
-
         <form onSubmit={OnSubmit}>
           {step === 1 && (
-            <Fragment>
-              
-              
-  
-            
-            
-             
-  
-            
-              <div className="row center-align" style={{ marginTop: 10 }}>
-              <div className="input-field col s2 offset-s4">
-              <p
+            <Fragment>              
+            <div className="row" style={{ marginTop: 10 }}>
+              <div className="input-field col s6">
+              <p className="right"
             style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 18 }}
           >
-            Izaberite format
+            Izaberite format:
           </p>
               </div>
-                  <div className="input-field col s2">
-                    <select
-                      defaultValue={userInfo.format}
-                      onChange={e =>
-                        setUserInfo({ ...userInfo, format: e.target.value })
-                      }
-                    >
-                      <option value="9x13">9x13</option>
-                      {/* <option value="10x13,5">10x13,5</option> */}
-                      <option value="10x15">10x15</option>
-                      {/* <option value="11x15">11x15</option> */}
-                      <option value="13x18">13x18</option>
-                      {/* <option value="15x20">15x20</option> */}
-                      <option value="15x21">15x21</option>
-                      <option value="20x30">20x30</option>
-                      {/* <option value="24x30">24x30</option> */}
-                      {/* <option value="30x40">30x40</option> */}
-                      {/* <option value="30x45">30x45</option> */}
-                    </select>
-                    <label>Format</label>
-                  </div>
+              <div className="input-field col s5 m3 l2">
+                <select
+                  defaultValue={userInfo.format}
+                  onChange={e =>
+                    setUserInfo({ ...userInfo, format: e.target.value })
+                  }
+                >
+                  <option value="9x13">9x13</option>
+                  {/* <option value="10x13,5">10x13,5</option> */}
+                  <option value="10x15">10x15</option>
+                  {/* <option value="11x15">11x15</option> */}
+                  <option value="13x18">13x18</option>
+                  {/* <option value="15x20">15x20</option> */}
+                  <option value="15x21">15x21</option>
+                  <option value="20x30">20x30</option>
+                  {/* <option value="24x30">24x30</option> */}
+                  {/* <option value="30x40">30x40</option> */}
+                  {/* <option value="30x45">30x45</option> */}
+                </select>
+                <label>Format</label>
+              </div>
                   {/* <div className="input-field col s6">
                     <button
                       data-target="modal2"
@@ -307,25 +297,25 @@ export const FileUpload = () => {
                       Cene formata
                     </button>
                   </div> */}
-                </div>
+            </div>
 
-              <div className="row">
-                <div className="col s6 offset-s3 center-align">
-                  {!uploading && !uploadFinishedSuccessfully && (
-                    <Dropzone
-                      //setFilePreviews={setFilePreviews}
-                      files={files}
-                      setFiles={setFiles}
-                      loading={loading}
-                      setLoading={setLoading}
-                      setLoadProgress={setLoadProgress}
-                    />
-                  )}
-                </div>
+            <div className="row center-align">
+              <div className="col s12 m10 l8 offset-m1 offset-l2">
+                {!uploading && !uploadFinishedSuccessfully && (
+                  <Dropzone
+                    //setFilePreviews={setFilePreviews}
+                    files={files}
+                    setFiles={setFiles}
+                    loading={loading}
+                    setLoading={setLoading}
+                    setLoadProgress={setLoadProgress}
+                  />
+                )}
               </div>
+            </div>
               <div className="row" style={{ marginBottom: 0 }}>
                 {files[0] && (
-                  <div className="col s12">
+                  <div className="col s12" style={{marginBottom: 10}}>
                     <SmartGallery
                       rootStyle={{ margin: 'auto' }}
                       images={files.map((file, index) => {
@@ -373,10 +363,7 @@ export const FileUpload = () => {
                     </p>
                   </div>
                 )}
-              </div>
-              
-                
-              
+              </div>   
             </Fragment>
           )}
 
@@ -410,49 +397,54 @@ export const FileUpload = () => {
           )}
 
           <div className="row">
-            <div className="col s2 offset-s1">
+            <div className="col s3 m4">
               {step !== 1 && !uploadFinishedSuccessfully && !uploading && (
                 <button
-                  className="btn-flat"
-                  style={{ padding: 5 }}
+                  className="btn btn-flat right"
+                  style={{ marginTop: 44 }}               
                   onClick={e => prevStep(e)}
                 >
-                  <i className="material-icons left">arrow_back</i>
-                  <span className="hide-on-med-and-down">Nazad</span>
+                  <i className="material-icons left hide-on-med-and-down">
+                    navigate_before
+                  </i>
+                 Nazad
                 </button>
               )}
             </div>
-            <div className="col s4 offset-s2" style={{ color: 'grey' }}>
+            <div className="col s6 m4" style={{ color: 'grey' }}>
               {files[0] && (
-                <blockquote style={{ marginTop: 0 }}>
-                  <p style={{ marginBottom: 0, marginTop: 0 }}>
-                    Broj fotografija: {ukupnoKomada}
-                  </p>
-                  <p style={{ marginBottom: 0, marginTop: 0 }}>
-                    Cena po fotografiji: {racun.tarifa} rsd
-                  </p>
-                  <p style={{ marginBottom: 0, marginTop: 0 }}>
-                    Ukupno: {racun.ukupno} rsd{' '}
-                    {userInfo.preuzimanje === 'kurirska sluzba' && (
-                      <i>+ poštarina</i>
-                    )}
-                  </p>
-                </blockquote>
+                <div class="card indigo darken-2">
+                  <div class="card-content white-text">
+                    <p style={{ marginBottom: 0, marginTop: 0 }}>
+                      Broj fotografija: {ukupnoKomada}
+                    </p>
+                    <p style={{ marginBottom: 0, marginTop: 0 }}>
+                      Cena po fotografiji: {racun.tarifa} rsd
+                    </p>
+                    <p style={{ marginBottom: 0, marginTop: 0 }}>
+                      Ukupno: {racun.ukupno} rsd{' '}
+                      {userInfo.preuzimanje === 'kurirska sluzba' && (
+                        <i>+ poštarina</i>
+                      )}
+                    </p>
+                    </div>
+                </div>
               )}
             </div>
 
             <div className="col s3">
               {step !== 3 && (
                 <button
-                  className={`btn btn-large truncate ${
+                  className={`btn btn-large ${
                     !files[0] ? 'disabled' : ''
                   }`}
+                  style={{ marginTop: 35 }}  
                   onClick={e => nextStep(e)}
                 >
-                  <i className="material-icons right hide-on-med-and-down">
-                    arrow_forward
-                  </i>
-                  Dalje
+                   <i className="material-icons right hide-on-med-and-down">
+                    navigate_next
+                  </i>       
+                Dalje
                 </button>
               )}
               {step === 3 && !uploading && !uploadFinishedSuccessfully && (
@@ -461,6 +453,7 @@ export const FileUpload = () => {
                     !userFieldsValid ? 'disabled' : ''
                   }`}
                   data-target="modal1"
+                  style={{ marginTop: 35 }}
                 >
                   Pošalji
                   <i className="material-icons right hide-on-med-and-down">
@@ -500,7 +493,7 @@ export const FileUpload = () => {
 
           {resultMessage.status === 'success' && (
             <div className="row">
-              <div className="col s2 offset-s4 center-align">
+              <div className="col s6 m4 l3 offset-m2 offset-l3">
                 {' '}
                 <img
                   src={successImage}
@@ -509,8 +502,8 @@ export const FileUpload = () => {
                   height="230"
                 ></img>
               </div>
-              <div className="col s4 indigo-text" style={{ marginTop: 20 }}>
-                <i>{resultMessage.message}</i>
+              <div className="col s6 m4 l4 indigo-text" style={{ marginTop: 20 }}>
+                <p className="left"><i>{resultMessage.message}</i></p>
               </div>
             </div>
           )}

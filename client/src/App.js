@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import FileUpload from './components/FileUpload';
-import Overview from './components/Overview';
-import Nav from './components/Nav';
-import Login from './components/Login';
-import OrderDetails from './components/OrderDetails';
+import FileUpload from './pages/FileUpload';
+import Overview from './pages/Overview';
+import Nav from './layout/Nav';
+import Login from './pages/Login';
+import OrderDetails from './pages/OrderDetails';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import UserContext from './context/UserContext';
-import Footer from './components/Footer';
+import Footer from './layout/Footer';
 
 function App() {
   const [userData, setUserData] = useState({

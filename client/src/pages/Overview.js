@@ -1,8 +1,8 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import useFetchOrders from './useFetchOrders';
-import Order from './Order';
-import OrdersPagination from './OrdersPagination';
-import Spinner from './Spinner';
+import useFetchOrders from '../components/useFetchOrders';
+import Order from '../components/Order';
+import OrdersPagination from '../components/OrdersPagination';
+import Spinner from '../layout/Spinner';
 import { useHistory } from 'react-router-dom';
 
 import M from 'materialize-css';
