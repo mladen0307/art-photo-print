@@ -96,7 +96,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     //public_ids: order.photos.map(photo => photo.public_id),
     prefixes: req.body.folder,
     resource_type: 'image',
-    mode: 'download'
+    mode: 'download',
+    expires_at: Date.now()/1000 + 365 * 24 * 60 * 60
   });
 
   const newOrder = await Order.create(req.body);

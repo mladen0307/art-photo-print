@@ -14,6 +14,7 @@ const Footer = () => {
               usluge iz oblasti digitalne štampe, fotografije, foto i video
               produkcije.
             </p>
+            <a href="https://fotoartnis.com/politika-privatnosti/">Politika privatnosti</a>
           </div>
           <div className="col m4 s12 center-align">
             <a href="https://www.facebook.com/NisFotoArt">
