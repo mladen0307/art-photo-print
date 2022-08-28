@@ -242,8 +242,10 @@ table.nl-container(bgcolor='#f9f9f9' cellpadding='0' cellspacing='0' role='prese
                         p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') Prezime: #{data.order.prezime}
                         p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') telefon: #{data.order.telefon}
                         p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') email: #{data.order.email}
-                        p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') broj fotografija: #{data.order.ukupnoFotografija}
+                        p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') broj fajlova: #{data.order.photos.length}
+                        p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') broj fotografija za izradu: #{data.order.ukupnoFotografija}
                         p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') format: #{data.order.format}
+                        p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') cena po fotografiji:: #{data.order.racun/data.order.ukupnoFotografija} rsd
                         p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') način dostave: #{data.order.preuzimanje}
                         if data.order.adresa
                           p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') adresa #{data.order.adresa}
@@ -251,7 +253,10 @@ table.nl-container(bgcolor='#f9f9f9' cellpadding='0' cellspacing='0' role='prese
                         else
                           p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') racun: #{data.order.racun} rsd
                         p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') Download: 
-                          a(href=data.order.downloadLink download) #{data.order.downloadLink}
+                          ul
+                            each val in data.order.downloadLinks
+                              li
+                                a(href=val download) #{val}
                     //if mso
                     table.divider(border='0' cellpadding='0' cellspacing='0' role='presentation' style='table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;' valign='top' width='100%')
                       tbody

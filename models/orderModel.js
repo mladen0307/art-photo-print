@@ -46,7 +46,7 @@ const orderSchema = new mongoose.Schema(
       }
     ],
     folder: String,
-    downloadLink: String,
+    downloadLinks: [String],
     format: {
       type: String,
       enum: [

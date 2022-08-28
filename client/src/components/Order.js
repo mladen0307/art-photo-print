@@ -98,7 +98,11 @@ export default function Order({ order, setFetchAgainToggle }) {
               <br />
               format: {order.format}
               <br />
-              broj fotografija: {order.ukupnoFotografija}
+              broj fajlova: {order.photos.length}
+              <br />
+              broj fotografija za izradu: {order.ukupnoFotografija}
+              <br />
+              cena po fotografiji: {order.racun/order.ukupnoFotografija} rsd
               <br />
               <br />
               <i className="material-icons" style={{ verticalAlign: '-6px' }}>
@@ -197,12 +201,16 @@ export default function Order({ order, setFetchAgainToggle }) {
         </div>
         <div className="card-action">
           {!order.obrisano && (
-            <button
-              className="btn-flat indigo-text"
-              onClick={e => downloadFiles(e)}
-            >
-              Download
-            </button>
+            // <button
+            //   className="btn-flat indigo-text"
+            //   onClick={e => downloadFiles(e)}
+            // >
+            //   Download
+            // </button>
+            <>
+            {!order.downloadLinks[1] && <a className="btn-flat indigo-text" href={order.downloadLinks[0]}>Download</a>}
+            {order.downloadLinks[1] && order.downloadLinks.map((link,i) => <a key={i} className="btn-flat indigo-text" href={order.downloadLinks[i]}>Download Part {i+1}</a>)}            
+            </>
           )}
           {order.obrisano && (
             <i className="grey-text">fotografije su obrisane</i>

@@ -19,6 +19,7 @@ import CeneModal from '../components/CeneModal';
 import M from 'materialize-css';
 
 import cene from '../helpers/cene';
+import { clearConfigCache } from 'prettier';
 
 export const FileUpload = () => {
   const [step, setStep] = useState(1);
@@ -127,18 +128,35 @@ export const FileUpload = () => {
     const date = new Date()
       .toLocaleString('en-GB', { dateStyle: 'short' })
       .replaceAll('/', '.');
-    const folder = `orders/${date}/${userInfo.ime}_${userInfo.prezime}_${userInfo.format}_${userInfo.telefon}_${userInfo.preuzimanje}_${timestamp}`;
+    const folder = `orders/${date}/${userInfo.ime}_${userInfo.prezime}_${timestamp}`;
     let resProm = [];
     let res = [];
 
-    
+    //Due to 100MB cloudinary size limit for download zips, tagging images for download chunks
+    let totalSize = 0;
+    let chunk = 1;
+    let tag = folder+'_'+chunk.toString();
+    let tags = [];
+    tags.push(tag);
+
     for (let i = 0; i < filesArr.length; i++) {
+      
       try {
         const file = await resizeFile(filesArr[i]);
+        if(totalSize + file.size > 100000000){
+          chunk++;
+          tag = folder+'_'+chunk.toString();
+          tags.push(tag);
+          totalSize = 0;
+        }
+        totalSize+= file.size;
+
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('folder', `${folder}/x${file.brojKomada}`);
         formData.append('upload_preset', 'fotoart');
+        formData.append('tags', [tag]);
 
         resProm[i] = axios.post(
           'https://api.cloudinary.com/v1_1/mladen0307/image/upload',
@@ -196,6 +214,7 @@ export const FileUpload = () => {
       formData.set('preuzimanje', userInfo.preuzimanje);
       formData.set('photos', JSON.stringify(photos));
       formData.set('folder', folder);
+      formData.set('tags', JSON.stringify(tags));
       await axios.post('/api/v1/orders', formData, {
         withCredentials: true
       });
@@ -285,7 +304,7 @@ export const FileUpload = () => {
                   <option value="20x30">20x30</option>
                   {/* <option value="24x30">24x30</option> */}
                   {/* <option value="30x40">30x40</option> */}
-                  {/* <option value="30x45">30x45</option> */}
+                  <option value="30x45">30x45</option>
                 </select>
                 <label>Format</label>
               </div>
@@ -411,10 +430,10 @@ export const FileUpload = () => {
                 </button>
               )}
             </div>
-            <div className="col s6 m4" style={{ color: 'grey' }}>
+            <div className="col s6 m4">
               {files[0] && (
-                <div class="card indigo darken-2">
-                  <div class="card-content white-text">
+                <div className="card grey lighten-3">
+                  <div className="card-content">
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
                       Broj fotografija: {ukupnoKomada}
                     </p>

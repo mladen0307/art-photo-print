@@ -90,15 +90,21 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createOrder = catchAsync(async (req, res, next) => {
+exports.createOrder = catchAsync(async (req, res, next) => { 
   req.body.photos = JSON.parse(req.body.photos);
-  req.body.downloadLink = cloudinary.utils.download_zip_url({
-    //public_ids: order.photos.map(photo => photo.public_id),
-    prefixes: req.body.folder,
-    resource_type: 'image',
-    mode: 'download',
-    expires_at: Date.now()/1000 + 365 * 24 * 60 * 60
-  });
+  req.body.downloadLinks = [];
+  req.body.tags = JSON.parse(req.body.tags);
+  
+  req.body.tags.forEach(tag => {
+    req.body.downloadLinks.push(cloudinary.utils.download_zip_url({
+      //public_ids: order.photos.map(photo => photo.public_id),
+      //prefixes: req.body.folder,
+      tags: tag,
+      resource_type: 'image',
+      mode: 'download',
+      expires_at: Date.now()/1000 + 365 * 24 * 60 * 60
+    }));
+  })
 
   const newOrder = await Order.create(req.body);
 
