@@ -22,24 +22,27 @@ mongoose
     useCreateIndex: true,
     useFindAndModify: false
   })
-  .then(() => console.log('DB connection successful!'));
+  .then(() => { /* server needs to start after db connects to support aws lambda */
+    console.log('DB connection successful!')
+    const port = process.env.PORT || 5000;
+    const server = app.listen(port, () => {
+      console.log(`Server running on port ${port}...`);
+    });
 
-const port = process.env.PORT || 5000;
-const server = app.listen(port, () => {
-  console.log(`Server running on port ${port}...`);
-});
+    process.on('unhandledRejection', err => {
+      console.log('UNHANDLED REJECTION! 💥 Shutting down...');
+      console.log(err.name, err.message);
+      server.close(() => {
+        process.exit(1);
+      });
+    });
 
-process.on('unhandledRejection', err => {
-  console.log('UNHANDLED REJECTION! 💥 Shutting down...');
-  console.log(err.name, err.message);
-  server.close(() => {
-    process.exit(1);
+    process.on('SIGTERM', () => {
+      console.log('🐱‍👤SIGTERM RECEIVED. Shutting down...');
+      server.close(() => {
+        console.log('🐱‍💻Process terminated');
+      });
+    });
   });
-});
 
-process.on('SIGTERM', () => {
-  console.log('🐱‍👤SIGTERM RECEIVED. Shutting down...');
-  server.close(() => {
-    console.log('🐱‍💻Process terminated');
-  });
-});
+
