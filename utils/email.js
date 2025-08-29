@@ -11,8 +11,8 @@ module.exports = class Email {
   newTransport() {
 
    
-    if (process.env.NODE_ENV === 'production') {
-      // Sendgrid
+    if (process.env.NODE_ENV === 'dev') {
+      // SMTP2GO
       return nodemailer.createTransport({
         service: 'SMTP2GO',
         auth: {
