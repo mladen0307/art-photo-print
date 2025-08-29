@@ -11,10 +11,12 @@ module.exports = class Email {
   newTransport() {
 
    
-    if (process.env.NODE_ENV === 'dev') {
+    if (process.env.NODE_ENV === 'production') {
       // SMTP2GO
       return nodemailer.createTransport({
-        service: 'SMTP2GO',
+        //service: 'SMTP2GO',
+        host: "mail.smtp2go.com",
+        port: 2525,
         auth: {
           user: process.env.SMTP2GO_USERNAME,
           pass: process.env.SMTP2GO_PASSWORD
