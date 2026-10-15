@@ -9,12 +9,23 @@ process.on('uncaughtException', err => {
 
 dotenv.config({ path: './.env' });
 
+const databaseUrl = process.env.DATABASE;
+if (!databaseUrl) {
+  throw new Error(
+    'DATABASE is required. Configure your MongoDB connection.'
+  );
+}
+
+const databasePassword = process.env.DATABASE_PASSWORD;
+if (databaseUrl.includes('<PASSWORD>') && !databasePassword) {
+  throw new Error(
+    'DATABASE_PASSWORD is required when DATABASE contains the <PASSWORD> placeholder.'
+  );
+}
+
 const app = require('./app');
 
-const DB = process.env.DATABASE.replace(
-  '<PASSWORD>',
-  process.env.DATABASE_PASSWORD
-);
+const DB = databaseUrl.replace('<PASSWORD>', () => databasePassword);
 
 mongoose
   .connect(DB, {
@@ -44,5 +55,4 @@ mongoose
       });
     });
   });
-
 

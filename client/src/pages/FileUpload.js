@@ -128,16 +128,17 @@ export const FileUpload = () => {
     const date = new Date()
       .toLocaleString('en-GB', { dateStyle: 'short' })
       .replaceAll('/', '.');
-    const folder = `orders/${date}/${userInfo.ime}_${userInfo.prezime}_${timestamp}`;
+    const folder = `orders/${date}/${timestamp}`;
     let resProm = [];
     let res = [];
 
     //Due to 100MB cloudinary size limit for download zips, tagging images for download chunks
     let totalSize = 0;
     let chunk = 1;
-    let tag = folder+'_'+chunk.toString();
+    let tag = `${folder}_${chunk}`;
     let tags = [];
     tags.push(tag);
+    let signedUpload = null;
 
     for (let i = 0; i < filesArr.length; i++) {
       
@@ -145,21 +146,39 @@ export const FileUpload = () => {
         const file = await resizeFile(filesArr[i]);
         if(totalSize + file.size > 100000000){
           chunk++;
-          tag = folder+'_'+chunk.toString();
+          tag = `${folder}_${chunk}`;
           tags.push(tag);
           totalSize = 0;
         }
         totalSize+= file.size;
 
+        if (
+          !signedUpload ||
+          signedUpload.tags !== tag ||
+          Date.now() - signedUpload.generatedAt >= 50 * 60 * 1000
+        ) {
+          const response = await axios.post('/api/v1/uploads/signature', {
+            folder,
+            tags: tag
+          });
+          signedUpload = {
+            ...response.data.data,
+            generatedAt: Date.now()
+          };
+        }
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('folder', `${folder}/x${file.brojKomada}`);
-        formData.append('upload_preset', 'fotoart');
-        formData.append('tags', [tag]);
+        formData.append('api_key', signedUpload.api_key);
+        formData.append('timestamp', signedUpload.timestamp);
+        formData.append('signature', signedUpload.signature);
+        formData.append('folder', signedUpload.folder);
+        formData.append('tags', signedUpload.tags);
+        formData.append('type', signedUpload.type);
+        formData.append('headers', signedUpload.headers);
 
         resProm[i] = axios.post(
-          'https://api.cloudinary.com/v1_1/mladen0307/image/upload',
+          `https://api.cloudinary.com/v1_1/${signedUpload.cloud_name}/image/upload`,
           formData,
           {
             headers: {
@@ -201,6 +220,9 @@ export const FileUpload = () => {
         url: res.data.url,
         secure_url: res.data.secure_url,
         public_id: res.data.public_id,
+        version: res.data.version,
+        format: res.data.format,
+        type: res.data.type,
         brojKomada: res.data.brojKomada
       }));
 

@@ -38,14 +38,18 @@ const orderSchema = new mongoose.Schema(
       default: Date.now
     },
     photos: [
-      {
+      new mongoose.Schema({
         url: String,
         secure_url: String,
         public_id: { type: String, unique: true },
+        version: Number,
+        format: String,
+        type: String,
         brojKomada: Number
-      }
+      })
     ],
     folder: String,
+    downloadTags: [String],
     downloadLinks: [String],
     format: {
       type: String,

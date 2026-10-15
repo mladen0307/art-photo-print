@@ -252,11 +252,8 @@ table.nl-container(bgcolor='#f9f9f9' cellpadding='0' cellspacing='0' role='prese
                           p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') racun: #{data.order.racun} rsd +poštarina
                         else
                           p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') racun: #{data.order.racun} rsd
-                        p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;') Download: 
-                          ul
-                            each val in data.order.downloadLinks
-                              li
-                                a(href=val download) #{val}
+                        p(style='font-size: 14px; line-height: 1.2; mso-line-height-alt: 17px; margin: 0;')
+                          a(href=data.adminOrderUrl) Otvori porudžbenice
                     //if mso
                     table.divider(border='0' cellpadding='0' cellspacing='0' role='presentation' style='table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;' valign='top' width='100%')
                       tbody

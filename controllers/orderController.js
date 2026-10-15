@@ -14,6 +14,50 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const getOrderWithSignedPhotoUrls = order => {
+  const orderData = order.toObject();
+  delete orderData.downloadLinks;
+  orderData.photos = (orderData.photos || []).map(photo => {
+    const storedUrl = photo.secure_url || photo.url;
+    const urlDetails = storedUrl
+      ? /\/image\/(upload|authenticated)\/(?:s--[^/]+--\/)?v(\d+)\/.+\.([a-zA-Z0-9]+)(?:\?.*)?$/.exec(
+          storedUrl
+        )
+      : null;
+    const version = photo.version || (urlDetails && Number(urlDetails[2]));
+    const format = photo.format || (urlDetails && urlDetails[3]);
+
+    const isLegacyPublicDelivery =
+      urlDetails && urlDetails[1] === 'upload' && !photo.version && !photo.format;
+    if (isLegacyPublicDelivery) {
+      return photo;
+    }
+
+    if (!photo.public_id || !version || !format) {
+      throw new AppError('Photo is missing Cloudinary delivery metadata', 500);
+    }
+
+    const signedUrl = cloudinary.url(photo.public_id, {
+      resource_type: 'image',
+      type: 'authenticated',
+      version,
+      format,
+      secure: true,
+      sign_url: true
+    });
+
+    return {
+      ...photo,
+      url: signedUrl,
+      secure_url: signedUrl
+    };
+  });
+
+  return orderData;
+};
+
+exports.getOrderWithSignedPhotoUrls = getOrderWithSignedPhotoUrls;
+
 exports.getAllOrders = catchAsync(async (req, res, next) => {
   const features = new APIFeatures(Order.find(), req.query)
     .filter()
@@ -21,13 +65,14 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
   const orders = await features.query;
+  const ordersWithSignedPhotoUrls = orders.map(getOrderWithSignedPhotoUrls);
 
   // SEND RESPONSE
   res.status(200).json({
     status: 'success',
-    results: orders.length,
+    results: ordersWithSignedPhotoUrls.length,
     data: {
-      orders
+      orders: ordersWithSignedPhotoUrls
     }
   });
 });
@@ -43,7 +88,7 @@ exports.getOrder = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      order
+      order: getOrderWithSignedPhotoUrls(order)
     }
   });
 });
@@ -92,19 +137,30 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
 
 exports.createOrder = catchAsync(async (req, res, next) => { 
   req.body.photos = JSON.parse(req.body.photos);
-  req.body.downloadLinks = [];
-  req.body.tags = JSON.parse(req.body.tags);
-  
-  req.body.tags.forEach(tag => {
-    req.body.downloadLinks.push(cloudinary.utils.download_zip_url({
-      //public_ids: order.photos.map(photo => photo.public_id),
-      //prefixes: req.body.folder,
-      tags: tag,
-      resource_type: 'image',
-      mode: 'download',
-      expires_at: Date.now()/1000 + 365 * 24 * 60 * 60
-    }));
-  })
+  let downloadTags;
+  try {
+    downloadTags = JSON.parse(req.body.tags);
+  } catch (error) {
+    return next(new AppError('Invalid download tags', 400));
+  }
+
+  if (
+    typeof req.body.folder !== 'string' ||
+    !Array.isArray(downloadTags) ||
+    downloadTags.length === 0 ||
+    downloadTags.some(
+      tag =>
+        typeof tag !== 'string' ||
+        !tag.startsWith(`${req.body.folder}_`) ||
+        !/^[1-9]\d*$/.test(tag.slice(req.body.folder.length + 1))
+    )
+  ) {
+    return next(new AppError('Invalid download tags', 400));
+  }
+
+  req.body.downloadTags = [...new Set(downloadTags)];
+  delete req.body.tags;
+  delete req.body.downloadLinks;
 
   const newOrder = await Order.create(req.body);
 
@@ -124,14 +180,22 @@ exports.createOrder = catchAsync(async (req, res, next) => {
   const email2 = new Email('mladen.k1234@gmail.com');
   const emailData2 = {
     title: 'Nova porudžbenica',
-    order: newOrder
+    order: newOrder,
+    adminOrderUrl: `${(process.env.APP_URL || 'https://fotoartnis.com').replace(
+      /\/+$/,
+      ''
+    )}/overview`
   };
   await email2.send('emailAdmin', `Foto Art - Nova porudžbenica ${newOrder.ime} ${newOrder.prezime}`, emailData2);
 
   const email3 = new Email('foto.art.nis@hotmail.com');
   const emailData3 = {
     title: 'Nova porudžbenica',
-    order: newOrder
+    order: newOrder,
+    adminOrderUrl: `${(process.env.APP_URL || 'https://fotoartnis.com').replace(
+      /\/+$/,
+      ''
+    )}/overview`
   };
   await email3.send('emailAdmin', `Foto Art - Nova porudžbenica ${newOrder.ime} ${newOrder.prezime}`, emailData3);
 
@@ -264,7 +328,7 @@ exports.downloadOld = function(req, res) {
     files: [
       {
         name: id,
-        mode: 0755,
+        mode: 0o755,
         date: new Date()
       },
       { path: `${__dirname}/../public/uploads/${id}`, name: id }
@@ -275,18 +339,54 @@ exports.downloadOld = function(req, res) {
 
 exports.download = catchAsync(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
-  const folder = order.folder;
-  const downloadLink = cloudinary.utils.download_zip_url({
-    //public_ids: order.photos.map(photo => photo.public_id),
-    prefixes: folder,
-    resource_type: 'image',
-    mode: 'download'
-  });
+  if (!order) {
+    return next(new AppError('No order found with that ID', 404));
+  }
+
+  if (order.obrisano) {
+    return next(new AppError('Order photos have been deleted', 410));
+  }
+
+  let downloadLinks;
+  if (order.downloadTags && order.downloadTags.length > 0) {
+    const assetTypes = new Set(
+      order.photos.map(photo => {
+        if (photo.type === 'authenticated' || photo.type === 'upload') {
+          return photo.type;
+        }
+        const storedUrl = photo.secure_url || photo.url || '';
+        return /\/image\/authenticated\//.test(storedUrl)
+          ? 'authenticated'
+          : 'upload';
+      })
+    );
+    if (assetTypes.size !== 1) {
+      return next(
+        new AppError('Order photos have inconsistent Cloudinary delivery types', 409)
+      );
+    }
+
+    const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60;
+    downloadLinks = order.downloadTags.map(tags =>
+      cloudinary.utils.download_zip_url({
+        tags,
+        resource_type: 'image',
+        type: assetTypes.values().next().value,
+        expires_at: expiresAt
+      })
+    );
+  } else {
+    downloadLinks = order.downloadLinks || [];
+  }
+
+  if (downloadLinks.length === 0) {
+    return next(new AppError('No download links are available for this order', 404));
+  }
 
   res.status(200).json({
     status: 'success',
     data: {
-      downloadLink
+      downloadLinks
     }
   });
 });

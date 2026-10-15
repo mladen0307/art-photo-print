@@ -7,6 +7,7 @@ const AppError = require('./utils/appError');
 const cors = require('cors');
 const zip = require('express-easy-zip');
 const userRouter = require('./routes/userRouter');
+const uploadRouter = require('./routes/uploadRouter');
 const cookieParser = require('cookie-parser');
 
 const rateLimit = require('express-rate-limit');
@@ -81,6 +82,7 @@ app.use(function(req, res, next) {
 //app.post('/upload', orderController.upload);
 app.use(express.static(path.join(__dirname, 'client/build')));
 
+app.use('/api/v1/uploads', uploadRouter);
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
 app.get('*', (req, res) => {

@@ -5,6 +5,9 @@ import SmartGallery from 'react-smart-gallery';
 export default function Order({ order, setFetchAgainToggle }) {
   const [izdato, setIzdato] = useState(order.izdato);
   const [brojKesice, setBrojKesice] = useState('');
+  const [downloadLinks, setDownloadLinks] = useState(null);
+  const [downloadsLoading, setDownloadsLoading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     axios({
@@ -17,35 +20,25 @@ export default function Order({ order, setFetchAgainToggle }) {
     }).then(response => {});
   }, [izdato, order.id]);
 
-  const downloadFilesOld = e => {
-    e.preventDefault();
-    axios({
-      url: `/download/${order.id}`,
-      method: 'GET',
-      responseType: 'blob'
-    }).then(response => {
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${order.id}.zip`);
-      document.body.appendChild(link);
-      link.click();
-    });
-  };
-
   const downloadFiles = e => {
     e.preventDefault();
-    axios({
-      url: `/api/v1/orders/download/${order.id}`,
-      method: 'GET',
-      withCredentials: true
-    }).then(response => {
-      const link = document.createElement('a');
-      link.href = response.data.data.downloadLink;
-      link.setAttribute('download', `${order.id}.zip`);
-      document.body.appendChild(link);
-      link.click();
-    });
+    setDownloadsLoading(true);
+    setDownloadError('');
+    axios
+      .get(`/api/v1/orders/download/${order.id}`, {
+        withCredentials: true
+      })
+      .then(response => {
+        setDownloadLinks(response.data.data.downloadLinks);
+      })
+      .catch(() => {
+        setDownloadError(
+          'Download link could not be generated. Please try again.'
+        );
+      })
+      .finally(() => {
+        setDownloadsLoading(false);
+      });
   };
 
   const posaljiEmail = e => {
@@ -201,17 +194,28 @@ export default function Order({ order, setFetchAgainToggle }) {
         </div>
         <div className="card-action">
           {!order.obrisano && (
-            // <button
-            //   className="btn-flat indigo-text"
-            //   onClick={e => downloadFiles(e)}
-            // >
-            //   Download
-            // </button>
-            <>
-            {!order.downloadLinks[1] && <a className="btn-flat indigo-text" href={order.downloadLinks[0]}>Download</a>}
-            {order.downloadLinks[1] && order.downloadLinks.map((link,i) => <a key={i} className="btn-flat indigo-text" href={order.downloadLinks[i]}>Download Part {i+1}</a>)}            
-            </>
+            <button
+              className="btn-flat indigo-text"
+              onClick={downloadFiles}
+              disabled={downloadsLoading}
+            >
+              {downloadsLoading ? 'Link je u pripremi...' : 'Generiši download link'}
+            </button>
           )}
+          {downloadLinks &&
+            downloadLinks.map((link, index) => (
+              <a
+                key={index}
+                className="btn-flat indigo-text"
+                href={link}
+                download
+              >
+                {downloadLinks.length > 1
+                  ? `Download Part ${index + 1}`
+                  : 'Download'}
+              </a>
+            ))}
+          {downloadError && <p className="pink-text">{downloadError}</p>}
           {order.obrisano && (
             <i className="grey-text">fotografije su obrisane</i>
           )}{' '}
