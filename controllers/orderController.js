@@ -2,56 +2,23 @@ const Order = require('./../models/orderModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
-const fs = require('fs');
-const { ensureDir } = require('fs-extra');
-const del = require('del');
-const cloudinary = require('cloudinary').v2;
+const archiver = require('archiver');
+const path = require('path');
+const r2 = require('./../utils/r2');
+const uploadController = require('./uploadController');
 const Email = require('./../utils/email');
 
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-const getOrderWithSignedPhotoUrls = order => {
+const getOrderWithSignedPhotoUrls = async order => {
   const orderData = order.toObject();
-  delete orderData.downloadLinks;
-  orderData.photos = (orderData.photos || []).map(photo => {
-    const storedUrl = photo.secure_url || photo.url;
-    const urlDetails = storedUrl
-      ? /\/image\/(upload|authenticated)\/(?:s--[^/]+--\/)?v(\d+)\/.+\.([a-zA-Z0-9]+)(?:\?.*)?$/.exec(
-          storedUrl
-        )
-      : null;
-    const version = photo.version || (urlDetails && Number(urlDetails[2]));
-    const format = photo.format || (urlDetails && urlDetails[3]);
-
-    const isLegacyPublicDelivery =
-      urlDetails && urlDetails[1] === 'upload' && !photo.version && !photo.format;
-    if (isLegacyPublicDelivery) {
-      return photo;
-    }
-
-    if (!photo.public_id || !version || !format) {
-      throw new AppError('Photo is missing Cloudinary delivery metadata', 500);
-    }
-
-    const signedUrl = cloudinary.url(photo.public_id, {
-      resource_type: 'image',
-      type: 'authenticated',
-      version,
-      format,
-      secure: true,
-      sign_url: true
-    });
-
-    return {
+  orderData.photos = await Promise.all(
+    (orderData.photos || []).map(async (photo, index) => ({
       ...photo,
-      url: signedUrl,
-      secure_url: signedUrl
-    };
-  });
+      url:
+        index < 4 && photo.r2Key && !order.obrisano
+          ? await r2.createReadUrl(photo.r2Key)
+          : null
+    }))
+  );
 
   return orderData;
 };
@@ -65,7 +32,9 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
   const orders = await features.query;
-  const ordersWithSignedPhotoUrls = orders.map(getOrderWithSignedPhotoUrls);
+  const ordersWithSignedPhotoUrls = await Promise.all(
+    orders.map(getOrderWithSignedPhotoUrls)
+  );
 
   // SEND RESPONSE
   res.status(200).json({
@@ -88,7 +57,7 @@ exports.getOrder = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      order: getOrderWithSignedPhotoUrls(order)
+      order: await getOrderWithSignedPhotoUrls(order)
     }
   });
 });
@@ -135,34 +104,91 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createOrder = catchAsync(async (req, res, next) => { 
-  req.body.photos = JSON.parse(req.body.photos);
-  let downloadTags;
-  try {
-    downloadTags = JSON.parse(req.body.tags);
-  } catch (error) {
-    return next(new AppError('Invalid download tags', 400));
+exports.createOrder = catchAsync(async (req, res, next) => {
+  let photos;
+  if (Array.isArray(req.body.photos)) {
+    photos = req.body.photos;
+  } else {
+    try {
+      photos = JSON.parse(req.body.photos);
+    } catch (error) {
+      return next(new AppError('Invalid photo metadata', 400));
+    }
   }
 
   if (
-    typeof req.body.folder !== 'string' ||
-    !Array.isArray(downloadTags) ||
-    downloadTags.length === 0 ||
-    downloadTags.some(
-      tag =>
-        typeof tag !== 'string' ||
-        !tag.startsWith(`${req.body.folder}_`) ||
-        !/^[1-9]\d*$/.test(tag.slice(req.body.folder.length + 1))
-    )
+    !uploadController.isValidUploadId(req.body.uploadId) ||
+    !Array.isArray(photos) ||
+    photos.length === 0 ||
+    photos.length > 3000
   ) {
-    return next(new AppError('Invalid download tags', 400));
+    return next(new AppError('Invalid uploaded photos', 400));
   }
 
-  req.body.downloadTags = [...new Set(downloadTags)];
-  delete req.body.tags;
-  delete req.body.downloadLinks;
+  const uploadPrefix = `orders/${req.body.uploadId}/`;
+  const seenKeys = new Set();
+  for (const photo of photos) {
+    if (
+      !photo ||
+      !uploadController.isValidObjectKey(photo.r2Key) ||
+      !photo.r2Key.startsWith(uploadPrefix) ||
+      seenKeys.has(photo.r2Key) ||
+      typeof photo.fileName !== 'string' ||
+      photo.fileName.trim().length === 0 ||
+      photo.fileName.length > 255 ||
+      !uploadController.isAllowedImageType(photo.contentType) ||
+      !Number.isInteger(photo.size) ||
+      photo.size < 1 ||
+      photo.size > uploadController.MAX_FILE_SIZE ||
+      !Number.isInteger(photo.brojKomada) ||
+      photo.brojKomada < 1 ||
+      photo.brojKomada > 10000
+    ) {
+      return next(new AppError('Invalid uploaded photo metadata', 400));
+    }
+    seenKeys.add(photo.r2Key);
+  }
 
-  const newOrder = await Order.create(req.body);
+  for (let index = 0; index < photos.length; index += 10) {
+    const photoBatch = photos.slice(index, index + 10);
+    let uploadedObjects;
+    try {
+      uploadedObjects = await Promise.all(
+        photoBatch.map(photo => r2.headObject(photo.r2Key))
+      );
+    } catch (error) {
+      if (error.$metadata && error.$metadata.httpStatusCode === 404) {
+        return next(new AppError('One or more uploaded photos are missing', 400));
+      }
+      throw error;
+    }
+    const hasInvalidObject = uploadedObjects.some(
+      (object, objectIndex) =>
+        object.ContentLength !== photoBatch[objectIndex].size ||
+        object.ContentType !== photoBatch[objectIndex].contentType
+    );
+    if (hasInvalidObject) {
+      return next(new AppError('Uploaded photo verification failed', 400));
+    }
+  }
+
+  const newOrder = await Order.create({
+    ime: req.body.ime,
+    prezime: req.body.prezime,
+    email: req.body.email,
+    telefon: req.body.telefon,
+    adresa: req.body.adresa,
+    format: req.body.format,
+    preuzimanje: req.body.preuzimanje,
+    photos: photos.map(photo => ({
+      public_id: photo.r2Key,
+      r2Key: photo.r2Key,
+      fileName: photo.fileName,
+      contentType: photo.contentType,
+      size: photo.size,
+      brojKomada: photo.brojKomada
+    }))
+  });
 
   //send email to user
   const  email = new Email(newOrder.email);
@@ -225,21 +251,6 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteOrderOld = catchAsync(async (req, res, next) => {
-  const order = await Order.findByIdAndDelete(req.params.id);
-
-  if (!order) {
-    return next(new AppError('No order found with that ID', 404));
-  }
-
-  await del(`${__dirname}/../public/uploads/${order.id}`);
-
-  res.status(204).json({
-    status: 'success',
-    data: null
-  });
-});
-
 exports.deleteOrder = catchAsync(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 
@@ -247,94 +258,56 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
     return next(new AppError('No order found with that ID', 404));
   }
 
-  let promises = [];
-  promises = order.photos.map(photo => {
-    cloudinary.uploader.destroy(photo.public_id);
-  });
-
-  Promise.all(promises).then(async () => {
-    const deletedOrder = await Order.findByIdAndUpdate(
-      req.params.id,
-      { obrisano: true },
-      {
-        new: true
-      }
-    );
-
-    res.status(200).json({
-      status: 'success',
-      data: deletedOrder
-    });
-  });
-});
-
-exports.upload = catchAsync(async (req, res, next) => {
-  if (req.files === null) {
-    return next(new AppError('No files uploaded', 400));
-  }
-  const files = Object.values(req.files);
-  req.body.photos = files.map(file => file.name);
-  let newOrder = null;
-  try {
-    newOrder = await Order.create(req.body);
-  } catch (err) {
-    return next(new AppError('Validation failed', 500));
-  }
-
-  ensureDir(
-    `${__dirname}/../public/uploads/${newOrder.id}/${newOrder.ime +
-      '_' +
-      newOrder.prezime}/${newOrder.format}`,
-    err => {
-      if (err) {
-        Order.findByIdAndDelete(newOrder.id);
-        throw new AppError('Internal server error', 500);
-      }
-      files.forEach(file => {
-        file.mv(
-          `${__dirname}/../public/uploads/${newOrder.id}/${newOrder.ime +
-            '_' +
-            newOrder.prezime}/${newOrder.format}/${file.name}`,
-          err => {
-            if (err) {
-              Order.findByIdAndDelete(newOrder.id);
-              throw new AppError('Internal server error', 500);
-            }
-          }
-        );
-      });
+  await r2.deleteObjects(
+    order.photos.map(photo => photo.r2Key).filter(Boolean)
+  );
+  const deletedOrder = await Order.findByIdAndUpdate(
+    req.params.id,
+    { obrisano: true },
+    {
+      new: true
     }
   );
 
-  res.status(201).json({
+  res.status(200).json({
     status: 'success',
-    data: {
-      order: newOrder,
-      files: files.map(file => {
-        return {
-          name: file.name,
-          path: `/uploads/${newOrder.id}/${newOrder.ime +
-            '_' +
-            newOrder.prezime}/${newOrder.format}/${file.name}`
-        };
-      })
-    }
+    data: deletedOrder
   });
 });
 
-exports.downloadOld = function(req, res) {
-  const id = req.params.id;
-  res.zip({
-    files: [
-      {
-        name: id,
-        mode: 0o755,
-        date: new Date()
-      },
-      { path: `${__dirname}/../public/uploads/${id}`, name: id }
-    ],
-    filename: `${id}zip-file-name.zip`
-  });
+const getArchiveFileName = (fileName, usedNames) => {
+  let safeName = path.basename(fileName.replace(/\\/g, '/')).replace(
+    /[\u0000-\u001f\u007f]/g,
+    '_'
+  );
+  if (!safeName || safeName === '.' || safeName === '..') safeName = 'photo';
+
+  let candidate = safeName;
+  let suffix = 1;
+  while (usedNames.has(candidate.toLowerCase())) {
+    const extension = path.extname(safeName);
+    const baseName = safeName.slice(0, safeName.length - extension.length);
+    candidate = `${baseName} (${suffix++})${extension}`;
+  }
+  usedNames.add(candidate.toLowerCase());
+  return candidate;
+};
+
+const getSafeFilenamePart = value =>
+  String(value || '')
+    .replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, '_')
+    .replace(/[. ]+$/g, '')
+    .trim() || 'order';
+
+const getOrderArchiveFileName = order => {
+  const createdAt = new Date(order.createdAt);
+  const date = Number.isNaN(createdAt.getTime())
+    ? 'unknown-date'
+    : createdAt.toISOString().slice(0, 10);
+  const parts = [date, order.ime, order.prezime, order.format].map(
+    getSafeFilenamePart
+  );
+  return `${parts.join('_')}.zip`;
 };
 
 exports.download = catchAsync(async (req, res, next) => {
@@ -347,82 +320,77 @@ exports.download = catchAsync(async (req, res, next) => {
     return next(new AppError('Order photos have been deleted', 410));
   }
 
-  let downloadLinks;
-  if (order.downloadTags && order.downloadTags.length > 0) {
-    const assetTypes = new Set(
-      order.photos.map(photo => {
-        if (photo.type === 'authenticated' || photo.type === 'upload') {
-          return photo.type;
-        }
-        const storedUrl = photo.secure_url || photo.url || '';
-        return /\/image\/authenticated\//.test(storedUrl)
-          ? 'authenticated'
-          : 'upload';
-      })
+  if (!order.photos || order.photos.length === 0) {
+    return next(new AppError('No photos are available for this order', 404));
+  }
+
+  if (order.photos.some(photo => !photo.r2Key)) {
+    return next(
+      new AppError('This order uses legacy photo storage and cannot be downloaded', 410)
     );
-    if (assetTypes.size !== 1) {
-      return next(
-        new AppError('Order photos have inconsistent Cloudinary delivery types', 409)
+  }
+
+  for (let index = 0; index < order.photos.length; index += 10) {
+    try {
+      await Promise.all(
+        order.photos
+          .slice(index, index + 10)
+          .map(photo => r2.headObject(photo.r2Key))
       );
-    }
-
-    const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60;
-    downloadLinks = order.downloadTags.map(tags =>
-      cloudinary.utils.download_zip_url({
-        tags,
-        resource_type: 'image',
-        type: assetTypes.values().next().value,
-        expires_at: expiresAt
-      })
-    );
-  } else {
-    downloadLinks = order.downloadLinks || [];
-  }
-
-  if (downloadLinks.length === 0) {
-    return next(new AppError('No download links are available for this order', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      downloadLinks
-    }
-  });
-});
-
-exports.uploadCloudinary = catchAsync(async (req, res, next) => {
-  if (req.files === null) {
-    return next(new AppError('No files uploaded', 400));
-  }
-  const files = Object.values(req.files);
-  req.body.photos = files.map(file => file.name);
-  let newOrder = null;
-  try {
-    newOrder = await Order.create(req.body);
-  } catch (err) {
-    return next(new AppError('Validation failed', 500));
-  }
-
-  files.forEach(file => {
-    cloudinary.uploader.upload(
-      file.tempFilePath,
-      {
-        public_id: `${file.name}`,
-        folder: `${newOrder.ime}_${newOrder.prezime}_${newOrder.format}_${newOrder.telefon}_${newOrder.preuzimanje}`
-      },
-      function(error, result) {
-        if (error) {
-          Order.findByIdAndDelete(newOrder.id);
-          throw new AppError('Internal server error', 500);
-        }
-        //console.log(result);
+    } catch (error) {
+      if (error.$metadata && error.$metadata.httpStatusCode === 404) {
+        return next(new AppError('One or more order photos are unavailable', 410));
       }
-    );
+      throw error;
+    }
+  }
+
+  const archive = archiver('zip', { zlib: { level: 0 } });
+  const handleArchiveError = error => {
+    if (res.headersSent) {
+      res.destroy(error);
+    } else {
+      next(error);
+    }
+  };
+  archive.on('warning', handleArchiveError);
+  archive.on('error', handleArchiveError);
+  res.on('close', () => {
+    if (!res.writableEnded) archive.abort();
   });
 
-  res.status(201).json({
-    status: 'success',
-    data: newOrder
+  res.set({
+    'Content-Type': 'application/zip',
+    'Content-Disposition': `attachment; filename="${getOrderArchiveFileName(
+      order
+    )}"`,
+    'X-Content-Type-Options': 'nosniff'
   });
+  archive.pipe(res);
+
+  try {
+    const usedNamesByQuantity = new Map();
+    for (const photo of order.photos) {
+      const object = await r2.getObject(photo.r2Key);
+      const quantityFolder = `x${photo.brojKomada}`;
+      if (!usedNamesByQuantity.has(quantityFolder)) {
+        usedNamesByQuantity.set(quantityFolder, new Set());
+      }
+      const fileName = getArchiveFileName(
+        photo.fileName || 'photo',
+        usedNamesByQuantity.get(quantityFolder)
+      );
+      archive.append(object.Body, {
+        name: `${quantityFolder}/${fileName}`
+      });
+    }
+    await archive.finalize();
+  } catch (error) {
+    archive.abort();
+    if (res.headersSent) {
+      res.destroy(error);
+    } else {
+      next(error);
+    }
+  }
 });

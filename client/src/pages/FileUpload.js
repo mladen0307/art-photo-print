@@ -19,7 +19,6 @@ import CeneModal from '../components/CeneModal';
 import M from 'materialize-css';
 
 import cene from '../helpers/cene';
-import { clearConfigCache } from 'prettier';
 
 export const FileUpload = () => {
   const [step, setStep] = useState(1);
@@ -124,83 +123,54 @@ export const FileUpload = () => {
     setUploadProgress(0);
 
     const filesArr = Object.values(files);
-    const timestamp = Date.now();
-    const date = new Date()
-      .toLocaleString('en-GB', { dateStyle: 'short' })
-      .replaceAll('/', '.');
-    const folder = `orders/${date}/${timestamp}`;
-    let resProm = [];
-    let res = [];
-
-    //Due to 100MB cloudinary size limit for download zips, tagging images for download chunks
-    let totalSize = 0;
-    let chunk = 1;
-    let tag = `${folder}_${chunk}`;
-    let tags = [];
-    tags.push(tag);
-    let signedUpload = null;
+    let uploadId;
+    const photos = [];
 
     for (let i = 0; i < filesArr.length; i++) {
-      
       try {
         const file = await resizeFile(filesArr[i]);
-        if(totalSize + file.size > 100000000){
-          chunk++;
-          tag = `${folder}_${chunk}`;
-          tags.push(tag);
-          totalSize = 0;
-        }
-        totalSize+= file.size;
-
-        if (
-          !signedUpload ||
-          signedUpload.tags !== tag ||
-          Date.now() - signedUpload.generatedAt >= 50 * 60 * 1000
-        ) {
-          const response = await axios.post('/api/v1/uploads/signature', {
-            folder,
-            tags: tag
-          });
-          signedUpload = {
-            ...response.data.data,
-            generatedAt: Date.now()
-          };
+        if (!uploadId) {
+          const sessionResponse = await axios.post('/api/v1/uploads/session');
+          uploadId = sessionResponse.data.data.uploadId;
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('api_key', signedUpload.api_key);
-        formData.append('timestamp', signedUpload.timestamp);
-        formData.append('signature', signedUpload.signature);
-        formData.append('folder', signedUpload.folder);
-        formData.append('tags', signedUpload.tags);
-        formData.append('type', signedUpload.type);
-        formData.append('headers', signedUpload.headers);
-
-        resProm[i] = axios.post(
-          `https://api.cloudinary.com/v1_1/${signedUpload.cloud_name}/image/upload`,
-          formData,
+        const signatureResponse = await axios.post(
+          '/api/v1/uploads/signature',
           {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            },
-            onUploadProgress: progressEvent => {
-              const newFileUploadPercentage = [...fileUploadPercentage];
-              newFileUploadPercentage.forEach(element => {
-                if (element.name === file.name) {
-                  element.value = Math.round(
-                    (progressEvent.loaded * 100) / progressEvent.total
-                  );
-                }
-              });
-
-              setFileUploadPercentage(newFileUploadPercentage);
-            },
-            withCredentials: false
+            uploadId,
+            fileName: file.name,
+            contentType: file.type,
+            size: file.size
           }
         );
-        res[i] = await resProm[i];        
-        res[i].data.brojKomada = filesArr[i].brojKomada;
+        const { key, url } = signatureResponse.data.data;
+
+        await axios.put(url, file, {
+          headers: {
+            'Content-Type': file.type
+          },
+          onUploadProgress: progressEvent => {
+            const newFileUploadPercentage = [...fileUploadPercentage];
+            newFileUploadPercentage.forEach(element => {
+              if (element.name === file.name) {
+                element.value = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+              }
+            });
+
+            setFileUploadPercentage(newFileUploadPercentage);
+          },
+          withCredentials: false
+        });
+
+        photos.push({
+          r2Key: key,
+          fileName: file.name,
+          contentType: file.type,
+          size: file.size,
+          brojKomada: filesArr[i].brojKomada
+        });
         setUploadCount(`${i + 1}/${filesArr.length}`);
         setUploadProgress(Math.round(((i + 1) * 100) / filesArr.length));
       } catch (err) {
@@ -216,28 +186,11 @@ export const FileUpload = () => {
       }
     }
     try {
-      let photos = res.map(res => ({
-        url: res.data.url,
-        secure_url: res.data.secure_url,
-        public_id: res.data.public_id,
-        version: res.data.version,
-        format: res.data.format,
-        type: res.data.type,
-        brojKomada: res.data.brojKomada
-      }));
-
-      const formData = new FormData();
-      formData.set('ime', userInfo.ime);
-      formData.set('prezime', userInfo.prezime);
-      formData.set('telefon', userInfo.telefon);
-      formData.set('email', userInfo.email);
-      formData.set('adresa', userInfo.adresa);
-      formData.set('format', userInfo.format);
-      formData.set('preuzimanje', userInfo.preuzimanje);
-      formData.set('photos', JSON.stringify(photos));
-      formData.set('folder', folder);
-      formData.set('tags', JSON.stringify(tags));
-      await axios.post('/api/v1/orders', formData, {
+      await axios.post('/api/v1/orders', {
+        ...userInfo,
+        uploadId,
+        photos
+      }, {
         withCredentials: true
       });
 

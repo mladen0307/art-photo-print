@@ -3,6 +3,7 @@ const uploadController = require('./../controllers/uploadController');
 
 const router = express.Router();
 
+router.post('/session', uploadController.createUploadSession);
 router.post('/signature', uploadController.createUploadSignature);
 
 module.exports = router;

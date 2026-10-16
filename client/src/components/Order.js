@@ -5,9 +5,6 @@ import SmartGallery from 'react-smart-gallery';
 export default function Order({ order, setFetchAgainToggle }) {
   const [izdato, setIzdato] = useState(order.izdato);
   const [brojKesice, setBrojKesice] = useState('');
-  const [downloadLinks, setDownloadLinks] = useState(null);
-  const [downloadsLoading, setDownloadsLoading] = useState(false);
-  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     axios({
@@ -19,27 +16,6 @@ export default function Order({ order, setFetchAgainToggle }) {
       withCredentials: true
     }).then(response => {});
   }, [izdato, order.id]);
-
-  const downloadFiles = e => {
-    e.preventDefault();
-    setDownloadsLoading(true);
-    setDownloadError('');
-    axios
-      .get(`/api/v1/orders/download/${order.id}`, {
-        withCredentials: true
-      })
-      .then(response => {
-        setDownloadLinks(response.data.data.downloadLinks);
-      })
-      .catch(() => {
-        setDownloadError(
-          'Download link could not be generated. Please try again.'
-        );
-      })
-      .finally(() => {
-        setDownloadsLoading(false);
-      });
-  };
 
   const posaljiEmail = e => {
     axios({
@@ -173,7 +149,9 @@ export default function Order({ order, setFetchAgainToggle }) {
             {!order.obrisano && (            
               <SmartGallery
                 rootStyle={{ margin: 'auto' }}
-                images={order.photos.map(photo => photo.url)}
+                images={order.photos
+                  .map(photo => photo.url)
+                  .filter(Boolean)}
                 width={270}
                 height={270}
               />)}
@@ -194,28 +172,13 @@ export default function Order({ order, setFetchAgainToggle }) {
         </div>
         <div className="card-action">
           {!order.obrisano && (
-            <button
+            <a
               className="btn-flat indigo-text"
-              onClick={downloadFiles}
-              disabled={downloadsLoading}
+              href={`/api/v1/orders/download/${order.id}`}
             >
-              {downloadsLoading ? 'Link je u pripremi...' : 'Generiši download link'}
-            </button>
+              Preuzmi ZIP (x1, x2...)
+            </a>
           )}
-          {downloadLinks &&
-            downloadLinks.map((link, index) => (
-              <a
-                key={index}
-                className="btn-flat indigo-text"
-                href={link}
-                download
-              >
-                {downloadLinks.length > 1
-                  ? `Download Part ${index + 1}`
-                  : 'Download'}
-              </a>
-            ))}
-          {downloadError && <p className="pink-text">{downloadError}</p>}
           {order.obrisano && (
             <i className="grey-text">fotografije su obrisane</i>
           )}{' '}
