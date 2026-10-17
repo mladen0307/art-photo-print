@@ -310,6 +310,19 @@ const getOrderArchiveFileName = order => {
   return `${parts.join('_')}.zip`;
 };
 
+const getAttachmentContentDisposition = fileName => {
+  const fallbackFileName = fileName
+    .replace(/[^\x20-\x7e]/g, '_')
+    .replace(/["\\]/g, '_');
+  const encodedFileName = encodeURIComponent(fileName).replace(
+    /[!'()*]/g,
+    character =>
+      `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+
+  return `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodedFileName}`;
+};
+
 exports.download = catchAsync(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
   if (!order) {
@@ -361,9 +374,9 @@ exports.download = catchAsync(async (req, res, next) => {
 
   res.set({
     'Content-Type': 'application/zip',
-    'Content-Disposition': `attachment; filename="${getOrderArchiveFileName(
-      order
-    )}"`,
+    'Content-Disposition': getAttachmentContentDisposition(
+      getOrderArchiveFileName(order)
+    ),
     'X-Content-Type-Options': 'nosniff'
   });
   archive.pipe(res);
