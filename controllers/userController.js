@@ -66,6 +66,18 @@ exports.getUser = (req, res) => {
     message: 'This route is not yet defined!'
   });
 };
+
+exports.getMe = (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: {
+        id: req.user.id,
+        role: req.user.role
+      }
+    }
+  });
+};
 exports.createUser = (req, res) => {
   res.status(500).json({
     status: 'error',

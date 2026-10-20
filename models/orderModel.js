@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const cene = require('./../utils/cene');
 
 const orderSchema = new mongoose.Schema(
   {
@@ -49,19 +48,19 @@ const orderSchema = new mongoose.Schema(
     ],
     format: {
       type: String,
-      enum: [
-        '9x13',
-        '10x13,5',
-        '10x15',
-        '11x15',
-        '13x18',
-        '15x20',
-        '15x21',
-        '20x30',
-        '24x30',
-        '30x40',
-        '30x45'
-      ]
+      required: true,
+      trim: true,
+      maxlength: 40
+    },
+    cenaPoFotografiji: {
+      type: Number,
+      min: 0,
+      validate: Number.isSafeInteger
+    },
+    racunSnapshot: {
+      type: Number,
+      min: 0,
+      validate: Number.isSafeInteger
     },
     preuzimanje: {
       type: String,
@@ -92,16 +91,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.virtual('racun').get(function() {
-  let count = 0;
-  this.photos.forEach(photo => {
-    count += photo.brojKomada;
-  });
-  let category = 0;
-  if (count >= 100) category = 1;
-  if (count >= 200) category = 2;
-  if (count >= 400) category = 3;
-
-  return count * cene[this.format][category];
+  return this.racunSnapshot;
 });
 
 orderSchema.virtual('ukupnoFotografija').get(function() {

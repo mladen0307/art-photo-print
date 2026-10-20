@@ -3,7 +3,7 @@ import useFetchOrders from '../components/useFetchOrders';
 import Order from '../components/Order';
 import OrdersPagination from '../components/OrdersPagination';
 import Spinner from '../layout/Spinner';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import M from 'materialize-css';
 
@@ -36,6 +36,12 @@ const Overview = () => {
   return (
     <Fragment>
       <div className="container">
+        <div className="right-align" style={{ margin: '16px 0' }}>
+          <Link to="/catalog" className="btn-flat indigo-text">
+            <i className="material-icons left">settings</i>
+            Cene i formati
+          </Link>
+        </div>
         <OrdersPagination
           page={page}
           setPage={setPage}

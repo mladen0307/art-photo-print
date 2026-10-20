@@ -7,6 +7,17 @@ const path = require('path');
 const r2 = require('./../utils/r2');
 const uploadController = require('./uploadController');
 const Email = require('./../utils/email');
+const Catalog = require('./../models/catalogModel');
+
+const getPriceForQuantity = (format, quantity) => {
+  const tier = format.quantityTiers.find(
+    item =>
+      quantity >= item.minPhotos &&
+      (item.maxPhotos === null || quantity <= item.maxPhotos)
+  );
+
+  return tier && tier.price;
+};
 
 const getOrderWithSignedPhotoUrls = async order => {
   const orderData = order.toObject();
@@ -152,6 +163,32 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     seenKeys.add(photo.r2Key);
   }
 
+  const photoCount = photos.reduce(
+    (total, photo) => total + photo.brojKomada,
+    0
+  );
+  const catalog = await Catalog.findOne({ key: 'default' });
+  if (!catalog) {
+    return next(new AppError('Catalog settings are unavailable', 503));
+  }
+  const format = catalog.formats.find(
+    item => item.name === req.body.format && item.enabled
+  );
+  if (!format) {
+    return next(new AppError('Selected photo format is unavailable', 400));
+  }
+  const unitPrice = getPriceForQuantity(format, photoCount);
+  const totalPrice = unitPrice * photoCount;
+  if (
+    !Number.isSafeInteger(unitPrice) ||
+    unitPrice < 0 ||
+    !Number.isSafeInteger(totalPrice)
+  ) {
+    return next(
+      new AppError('No valid price is configured for this order', 400)
+    );
+  }
+
   for (let index = 0; index < photos.length; index += 10) {
     const photoBatch = photos.slice(index, index + 10);
     let uploadedObjects;
@@ -182,6 +219,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     telefon: req.body.telefon,
     adresa: req.body.adresa,
     format: req.body.format,
+    cenaPoFotografiji: unitPrice,
+    racunSnapshot: totalPrice,
     preuzimanje: req.body.preuzimanje,
     photos: photos.map(photo => ({
       public_id: photo.r2Key,
@@ -237,6 +276,17 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 });
 
 exports.updateOrder = catchAsync(async (req, res, next) => {
+  const allowedFields = new Set(['izdato', 'brojKesice']);
+  if (
+    !req.body ||
+    Object.keys(req.body).length === 0 ||
+    Object.keys(req.body).some(field => !allowedFields.has(field))
+  ) {
+    return next(
+      new AppError('Only issue status and bag number can be updated', 400)
+    );
+  }
+
   const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true

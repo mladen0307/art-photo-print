@@ -14,11 +14,8 @@ import resizeFile from '../helpers/resizeFile';
 
 import GallerySelector from '../components/GallerySelector';
 import GalleryUploadProgress from '../components/GalleryUploadProgress';
-import CeneModal from '../components/CeneModal';
 
 import M from 'materialize-css';
-
-import cene from '../helpers/cene';
 
 export const FileUpload = () => {
   const [step, setStep] = useState(1);
@@ -36,9 +33,12 @@ export const FileUpload = () => {
   const [uploadCount, setUploadCount] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [userFieldsValid, setUserFieldsValid] = useState(false);
-  const [ukupnoKomada, setUkupnoKomada] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadProgress, setLoadProgress] = useState({ count: 0, total: 0 });
+  const [catalogFormats, setCatalogFormats] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
+  const [catalogRequestId, setCatalogRequestId] = useState(0);
 
   const [userInfo, setUserInfo] = useState({
     ime: '',
@@ -46,32 +46,74 @@ export const FileUpload = () => {
     email: '',
     telefon: '',
     adresa: '',
-    format: '13x18',
+    format: '',
     preuzimanje: 'radnja centar'
   });
 
-  const [racun, setRacun] = useState({ tarifa: '', ukupno: '' });
-
   useEffect(() => {
-    if (files) {
-      let ukupnoTemp = 0;
-      files.forEach(file => {
-        ukupnoTemp += file.brojKomada;
+    const cancelToken = axios.CancelToken.source();
+    setCatalogLoading(true);
+    setCatalogError('');
+
+    axios
+      .get('/api/v1/catalog', { cancelToken: cancelToken.token })
+      .then(response => {
+        const formats = response.data.data.catalog.formats.filter(
+          format => format.enabled
+        );
+        if (formats.length === 0) {
+          setCatalogFormats([]);
+          setCatalogError('Trenutno nema dostupnih formata za poručivanje.');
+          return;
+        }
+
+        setCatalogFormats(formats);
+        setUserInfo(current => ({
+          ...current,
+          format: formats.some(format => format.name === current.format)
+            ? current.format
+            : formats[0].name
+        }));
+      })
+      .catch(error => {
+        if (axios.isCancel(error)) return;
+        setCatalogFormats([]);
+        setCatalogError(
+          error.response && error.response.data && error.response.data.message
+            ? error.response.data.message
+            : 'Cenovnik nije moguće učitati. Proverite internet vezu i pokušajte ponovo.'
+        );
+      })
+      .finally(() => {
+        if (!cancelToken.token.reason) setCatalogLoading(false);
       });
 
-      setUkupnoKomada(ukupnoTemp);
+    return () => cancelToken.cancel();
+  }, [catalogRequestId]);
 
-      let category = 0;
-      if (ukupnoTemp >= 100) category = 1;
-      if (ukupnoTemp >= 200) category = 2;
-      if (ukupnoTemp >= 400) category = 3;
-
-      setRacun({
-        tarifa: cene[userInfo.format][category],
-        ukupno: cene[userInfo.format][category] * ukupnoTemp
-      });
-    }
-  }, [files, userInfo.format]);
+  const selectedFormat = catalogFormats.find(
+    format => format.name === userInfo.format
+  );
+  const ukupnoKomada = files.reduce(
+    (total, file) => total + file.brojKomada,
+    0
+  );
+  const selectedTier =
+    selectedFormat &&
+    selectedFormat.quantityTiers.find(
+      tier =>
+        ukupnoKomada >= tier.minPhotos &&
+        (tier.maxPhotos === null || ukupnoKomada <= tier.maxPhotos)
+    );
+  const racun = selectedTier
+    ? {
+        tarifa: selectedTier.price,
+        ukupno: selectedTier.price * ukupnoKomada
+      }
+    : { tarifa: '', ukupno: '' };
+  const hasValidQuote =
+    Number.isSafeInteger(racun.tarifa) &&
+    Number.isSafeInteger(racun.ukupno);
 
   useEffect(() => {
     M.AutoInit();
@@ -101,14 +143,19 @@ export const FileUpload = () => {
       files.length !== 0 &&
       /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i.test(
         userInfo.email
-      )
+      ) &&
+      selectedFormat &&
+      hasValidQuote
     )
       setUserFieldsValid(true);
     else setUserFieldsValid(false);
-  }, [userInfo, files]);
+  }, [userInfo, files, selectedFormat, hasValidQuote]);
 
   const nextStep = e => {
     e.preventDefault();
+    if (catalogLoading || catalogError || !selectedFormat || !hasValidQuote) {
+      return;
+    }
     setStep(step => step + 1);
   };
   const prevStep = e => {
@@ -117,6 +164,13 @@ export const FileUpload = () => {
   };
   const OnSubmit = async e => {
     e.preventDefault();
+    if (catalogLoading || catalogError || !selectedFormat || !hasValidQuote) {
+      setResultMessage({
+        status: 'fail',
+        message: 'Cenovnik nije dostupan. Pokušajte ponovo kasnije.'
+      });
+      return;
+    }
     setUploading(true);
     setResultMessage({ status: '', message: '' });
     setUploadCount(`0/${files.length}`);
@@ -255,42 +309,88 @@ export const FileUpload = () => {
           {step === 1 && (
             <Fragment>              
             <div className="row" style={{ marginTop: 10 }}>
-              <div className="input-field col s6">
-              <p className="right"
-            style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 18 }}
-          >
-            Izaberite format:
-          </p>
+              <div className="input-field col s12 m3">
+                <p
+                  className="right"
+                  style={{
+                    color: '#505050',
+                    fontFamily: 'Montserrat',
+                    fontSize: 18
+                  }}
+                >
+                  Izaberite format:
+                </p>
               </div>
-              <div className="input-field col s5 m3 l2">
+              <div className="input-field col s12 m3">
                 <select
-                  defaultValue={userInfo.format}
+                  value={userInfo.format}
+                  disabled={catalogLoading || !!catalogError || !catalogFormats.length}
                   onChange={e =>
                     setUserInfo({ ...userInfo, format: e.target.value })
                   }
                 >
-                  <option value="9x13">9x13</option>
-                  {/* <option value="10x13,5">10x13,5</option> */}
-                  <option value="10x15">10x15</option>
-                  {/* <option value="11x15">11x15</option> */}
-                  <option value="13x18">13x18</option>
-                  {/* <option value="15x20">15x20</option> */}
-                  <option value="15x21">15x21</option>
-                  <option value="20x30">20x30</option>
-                  {/* <option value="24x30">24x30</option> */}
-                  {/* <option value="30x40">30x40</option> */}
-                  <option value="30x45">30x45</option>
+                  {catalogFormats.map(format => (
+                    <option key={format.name} value={format.name}>
+                      {format.name}
+                    </option>
+                  ))}
                 </select>
                 <label>Format</label>
-              </div>
-                  {/* <div className="input-field col s6">
+                {catalogLoading && <p>Učitavanje formata i cena...</p>}
+                {catalogError && (
+                  <p className="red-text">
+                    {catalogError}{' '}
                     <button
-                      data-target="modal2"
-                      className=" btn-flat indigo-text modal-trigger"
+                      type="button"
+                      className="btn-flat red-text"
+                      onClick={() =>
+                        setCatalogRequestId(requestId => requestId + 1)
+                      }
                     >
-                      Cene formata
+                      Pokušaj ponovo
                     </button>
-                  </div> */}
+                  </p>
+                )}
+              </div>
+              {selectedFormat && (
+                <div
+                  className="col s12 m6"
+                  style={{ overflowX: 'auto', paddingTop: 8 }}
+                >
+                  <table
+                    className="striped centered"
+                    style={{ fontSize: 13, width: 'auto', margin: 0 }}
+                  >
+                    <thead>
+                      <tr>
+                        {selectedFormat.quantityTiers.map((tier, index) => (
+                          <th
+                            key={`${selectedFormat.name}-tier-heading-${index}`}
+                            style={{ padding: '4px 8px', whiteSpace: 'nowrap' }}
+                          >
+                            {tier.minPhotos}
+                            {tier.maxPhotos === null
+                              ? '+'
+                              : `–${tier.maxPhotos}`}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {selectedFormat.quantityTiers.map((tier, index) => (
+                          <td
+                            key={`${selectedFormat.name}-tier-price-${index}`}
+                            style={{ padding: '4px 8px', whiteSpace: 'nowrap' }}
+                          >
+                            {tier.price} RSD / kom
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="row center-align">
@@ -413,10 +513,12 @@ export const FileUpload = () => {
                       Broj fotografija: {ukupnoKomada}
                     </p>
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
-                      Cena po fotografiji: {racun.tarifa} rsd
+                      Cena po fotografiji:{' '}
+                      {racun.tarifa === '' ? 'nije dostupna' : `${racun.tarifa} rsd`}
                     </p>
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
-                      Ukupno: {racun.ukupno} rsd{' '}
+                      Ukupno:{' '}
+                      {racun.ukupno === '' ? 'nije dostupno' : `${racun.ukupno} rsd`}{' '}
                       {userInfo.preuzimanje === 'kurirska sluzba' && (
                         <i>+ poštarina</i>
                       )}
@@ -430,8 +532,21 @@ export const FileUpload = () => {
               {step !== 3 && (
                 <button
                   className={`btn btn-large ${
-                    !files[0] ? 'disabled' : ''
+                    !files[0] ||
+                    catalogLoading ||
+                    catalogError ||
+                    !selectedFormat ||
+                    !hasValidQuote
+                      ? 'disabled'
+                      : ''
                   }`}
+                  disabled={
+                    !files[0] ||
+                    catalogLoading ||
+                    !!catalogError ||
+                    !selectedFormat ||
+                    !hasValidQuote
+                  }
                   style={{ marginTop: 35 }}  
                   onClick={e => nextStep(e)}
                 >
@@ -532,10 +647,12 @@ export const FileUpload = () => {
                       Broj fotografija: {ukupnoKomada}
                     </p>
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
-                      Cena po fotografiji: {racun.tarifa} rsd
+                      Cena po fotografiji:{' '}
+                      {racun.tarifa === '' ? 'nije dostupna' : `${racun.tarifa} rsd`}
                     </p>
                     <p style={{ marginBottom: 0, marginTop: 0 }}>
-                      Ukupno: {racun.ukupno} rsd{' '}
+                      Ukupno:{' '}
+                      {racun.ukupno === '' ? 'nije dostupno' : `${racun.ukupno} rsd`}{' '}
                       {userInfo.preuzimanje === 'kurirska sluzba' && (
                         <i>+ poštarina</i>
                       )}
@@ -567,7 +684,6 @@ export const FileUpload = () => {
       <br></br>
       <br></br>
       <br></br>
-      <CeneModal></CeneModal>
     </Fragment>
   );
 };

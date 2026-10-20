@@ -6,6 +6,7 @@ const AppError = require('./utils/appError');
 const cors = require('cors');
 const userRouter = require('./routes/userRouter');
 const uploadRouter = require('./routes/uploadRouter');
+const catalogRouter = require('./routes/catalogRouter');
 const cookieParser = require('cookie-parser');
 
 const rateLimit = require('express-rate-limit');
@@ -77,6 +78,7 @@ app.use(express.static(path.join(__dirname, 'client/build')));
 
 app.use('/api/v1/uploads', uploadRouter);
 app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/catalog', catalogRouter);
 app.use('/api/v1/users', userRouter);
 app.all('/api/*', (req, res) => {
   res.status(404).json({

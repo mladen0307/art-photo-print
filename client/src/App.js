@@ -4,6 +4,7 @@ import Overview from './pages/Overview';
 import Nav from './layout/Nav';
 import Login from './pages/Login';
 import OrderDetails from './pages/OrderDetails';
+import Catalog from './pages/Catalog';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import UserContext from './context/UserContext';
 import Footer from './layout/Footer';
@@ -25,6 +26,7 @@ function App() {
               <Route path="/" exact component={FileUpload}></Route>
               <Route path="/upload" exact component={FileUpload}></Route>
               <Route path="/overview" exact component={Overview}></Route>
+              <Route path="/catalog" exact component={Catalog}></Route>
               <Route
                 path="/overview/:id"
                 exact

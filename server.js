@@ -33,7 +33,7 @@ mongoose
     useCreateIndex: true,
     useFindAndModify: false
   })
-  .then(() => { /* server needs to start after db connects to support aws lambda */
+  .then(() => {
     console.log('DB connection successful!')
     const port = process.env.PORT || 5000;
     const server = app.listen(port, () => {
@@ -54,5 +54,9 @@ mongoose
         console.log('🐱‍💻Process terminated');
       });
     });
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database.');
+    console.error(err);
+    process.exit(1);
   });
-
