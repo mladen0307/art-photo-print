@@ -11,7 +11,7 @@ const Overview = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(4);
   const [fetchAgainToggle, setFetchAgainToggle] = useState(false);
-  const { orders, loading, error, hasNextPage } = useFetchOrders(
+  const { orders, loading, error, totalPages } = useFetchOrders(
     page,
     limit,
     fetchAgainToggle
@@ -39,7 +39,7 @@ const Overview = () => {
         <OrdersPagination
           page={page}
           setPage={setPage}
-          hasNextPage={hasNextPage}
+          totalPages={totalPages}
         />
         <a className="btn-floating" onClick={e => refreshOrders(e)}>
           <i className="material-icons">refresh</i>
@@ -64,7 +64,7 @@ const Overview = () => {
         <OrdersPagination
           page={page}
           setPage={setPage}
-          hasNextPage={hasNextPage}
+          totalPages={totalPages}
         />
         <br></br>
         <br></br>

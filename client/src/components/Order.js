@@ -98,48 +98,18 @@ export default function Order({ order, setFetchAgainToggle }) {
               <br />
               za naplatu: {order.racun} rsd {order.adresa && '+poštarina'}
               <br />              
-              {order.brojKesice ? (
-                <h6 style={{ color: 'grey' }}>
-                  Broj kesice: {order.brojKesice}
-                </h6>
-              ) : (
-                <form onSubmit={postaviBrojKesice}>
-                  <div className="input-field " style={{ marginBottom: 0 }}>
-                    <input
-                      id={`broj${order._id}`}
-                      type="text"
-                      value={order.brojKesice}
-                      maxLength="4"
-                      onChange={e => setBrojKesice(e.target.value)}
-                    />
-                    <label htmlFor={`broj${order._id}`}>Broj kesice</label>
-                  </div>
-
-                  {brojKesice.length === 4 && (
-                    <button
-                      className="waves-effect waves-light btn-small"
-                      action="submit"
-                      name="action"
-                    >
-                      dodeli broj
-                    </button>
-                  )}
-                </form>
-              )}
-              
-              <br />
+              <br />   
               {!order.poslatEmail ? (
-                order.brojKesice && (
                   <Fragment>
                   <button
-                    className="waves-effect waves-light btn-small"
+                    className="waves-effect waves-light btn-small indigo accent-1"
                     onClick={e => posaljiEmail(e)}
                   >
-                    pošalji email
+                    Pošalji email obaveštenje
                   </button>
                   <br/>
                   </Fragment>
-                )
+                
               ) : (
                 <p style={{ color: 'grey' }}>Email obaveštenje je poslato</p>
               )}             
@@ -176,7 +146,7 @@ export default function Order({ order, setFetchAgainToggle }) {
               className="btn-flat indigo-text"
               href={`/api/v1/orders/download/${order.id}`}
             >
-              Preuzmi ZIP (x1, x2...)
+              Preuzmi Zip
             </a>
           )}
           {order.obrisano && (

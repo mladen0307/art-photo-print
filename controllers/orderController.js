@@ -31,6 +31,8 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     .sort()
     .limitFields()
     .paginate();
+  const totalResults = await Order.countDocuments(features.query.getQuery());
+  const limit = req.query.limit * 1 || 100;
   const orders = await features.query;
   const ordersWithSignedPhotoUrls = await Promise.all(
     orders.map(getOrderWithSignedPhotoUrls)
@@ -41,7 +43,8 @@ exports.getAllOrders = catchAsync(async (req, res, next) => {
     status: 'success',
     results: ordersWithSignedPhotoUrls.length,
     data: {
-      orders: ordersWithSignedPhotoUrls
+      orders: ordersWithSignedPhotoUrls,
+      totalPages: Math.ceil(totalResults / limit)
     }
   });
 });
