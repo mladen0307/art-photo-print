@@ -74,7 +74,15 @@ app.use(function(req, res, next) {
   return next();
 });
 
-app.use(express.static(path.join(__dirname, 'client/build')));
+app.use(
+  express.static(path.join(__dirname, 'client/build'), {
+    setHeaders: (res, filePath) => {
+      if (path.basename(filePath) === 'index.html') {
+        res.setHeader('Cache-Control', 'no-store');
+      }
+    }
+  })
+);
 
 app.use('/api/v1/uploads', uploadRouter);
 app.use('/api/v1/orders', orderRouter);
@@ -87,6 +95,14 @@ app.all('/api/*', (req, res) => {
   });
 });
 app.get('*', (req, res) => {
+  if (path.extname(req.path)) {
+    return res.status(404).json({
+      status: 'error',
+      message: `Can't find ${req.originalUrl} on this server!`
+    });
+  }
+
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
