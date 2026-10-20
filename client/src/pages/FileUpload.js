@@ -289,7 +289,7 @@ export const FileUpload = () => {
           <p
             style={{ color: '#505050', fontFamily: 'Montserrat', fontSize: 18 }}
           >
-            Pošaljite fotografije I stižu Vam u roku od par dana na kućnu adresu.
+            Pošaljite fotografije i preuzmite ih u radnji ili izaberite opciju slanja na kućnu adresu.
           </p>
         </div>)}
         {step === 1 && (
