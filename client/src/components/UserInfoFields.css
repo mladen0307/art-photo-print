@@ -1,0 +1,134 @@
+.delivery-choice {
+  margin-top: 8px;
+  margin-bottom: 18px;
+}
+
+.delivery-choice__heading {
+  margin: 0 0 12px;
+  color: #435269;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.delivery-choice__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.delivery-choice__button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #dfe5ed;
+  border-radius: 7px;
+  background: #fff;
+  color: #4b5d74;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 150ms ease, background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.delivery-choice__button--selected {
+  border-color: #aab5c4;
+  background: #f5f6f8;
+  box-shadow: none;
+}
+
+.delivery-choice__button:focus {
+  background-color: #fff;
+  color: #4b5d74;
+}
+
+.delivery-choice__button--selected:focus {
+  background-color: #f5f6f8;
+}
+
+.delivery-choice__button:focus-visible,
+.delivery-choice__store-option:focus-within {
+  outline: 2px solid #536b94;
+  outline-offset: 2px;
+}
+
+.delivery-choice__stores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.delivery-choice__stores legend {
+  width: 100%;
+  margin-bottom: 7px;
+  color: #68778c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.delivery-choice__store-option {
+  position: relative;
+  display: flex;
+  flex: 1 1 220px;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #dfe5ed;
+  border-radius: 7px;
+  background: #fff;
+  color: #4b5d74;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.delivery-choice__store-option > span {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 25px;
+  line-height: 1.4;
+}
+
+.delivery-choice__store-option strong {
+  display: block;
+  color: #30425e;
+  font-size: 12px;
+}
+
+.delivery-choice__store-option small {
+  display: block;
+  margin-top: 3px;
+  color: #788393;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.delivery-choice__store-option > input[type='radio'] + span {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 25px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.delivery-choice__store-option.delivery-choice__store--selected {
+  border-color: #526b96;
+  background: #f4f7fc;
+}
+
+@media only screen and (max-width: 600px) {
+  .delivery-choice__options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .delivery-choice__store-option {
+    flex-basis: 100%;
+  }
+}

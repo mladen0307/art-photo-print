@@ -1,0 +1,138 @@
+.order-summary {
+  overflow: hidden;
+  padding: 18px 20px;
+  border: 1px solid #e3e8f0;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fff 0%, #f7f9fc 100%);
+  box-shadow: 0 5px 18px rgba(35, 52, 76, 0.09);
+  color: #344257;
+}
+
+.order-summary__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 15px;
+}
+
+.order-summary__icon {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #e9eef8;
+  color: #394f79;
+}
+
+.order-summary__icon .material-icons {
+  font-size: 24px;
+}
+
+.order-summary__title {
+  min-width: 0;
+  flex: 1;
+}
+
+.order-summary__title h5 {
+  margin: 0 0 4px;
+  color: #26364d;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.order-summary__format {
+  color: #788393;
+  font-size: 12px;
+}
+
+.order-summary__format strong {
+  margin-left: 4px;
+  color: #435673;
+  font-weight: 700;
+}
+
+.order-summary__count {
+  align-self: flex-start;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #eef2f7;
+  color: #53647b;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.order-summary__line,
+.order-summary__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-summary__line {
+  padding: 12px 0;
+  border-top: 1px solid #e5e9ef;
+  color: #718096;
+  font-size: 13px;
+}
+
+.order-summary__line strong {
+  color: #435269;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.order-summary__total {
+  padding: 13px 0 2px;
+  border-top: 1px solid #e5e9ef;
+}
+
+.order-summary__total div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.order-summary__total span {
+  color: #26364d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.order-summary__total small {
+  color: #8490a0;
+  font-size: 10px;
+}
+
+.order-summary__total > strong {
+  color: #2e456f;
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.order-summary--confirmation {
+  margin: 0;
+  box-shadow: none;
+}
+
+@media only screen and (max-width: 600px) {
+  .order-summary {
+    padding: 16px;
+  }
+
+  .order-summary__header {
+    gap: 9px;
+  }
+
+  .order-summary__count {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+}

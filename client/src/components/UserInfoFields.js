@@ -1,5 +1,7 @@
 import React, { Fragment, useEffect } from 'react';
 import M from 'materialize-css';
+import './UserInfoFields.css';
+
 export default function UserInfoFields({
   userInfo,
   setUserInfo,
@@ -9,6 +11,10 @@ export default function UserInfoFields({
   useEffect(() => {
     M.updateTextFields();
   });
+
+  const isHomeDelivery = userInfo.preuzimanje === 'kurirska sluzba';
+  const updateDelivery = value =>
+    setUserInfo({ ...userInfo, preuzimanje: value });
 
   return (
     <Fragment>
@@ -62,20 +68,78 @@ export default function UserInfoFields({
         <label htmlFor="telefon">Kontakt telefon</label>
       </div>
       {!uploadFinished && !uploading && (
-        <div className="input-field col s10 offset-s1">
-          <select
-            defaultValue={userInfo.preuzimanje}
-            onChange={e =>
-              setUserInfo({ ...userInfo, preuzimanje: e.target.value })
-            }
-          >
-            <option value="radnja centar">preuzimanje u radnji u centru</option>
-            <option value="radnja trosarina">
-              preuzimanje u radnjni na trošarini
-            </option>
-            <option value="kurirska sluzba">dostava na adresu</option>
-          </select>
-          <label>Izaberite način dostave</label>
+        <div className="delivery-choice col s10 offset-s1">
+          <p className="delivery-choice__heading">Kako želite da preuzmete porudžbinu?</p>
+          <div className="delivery-choice__options">
+            <button
+              type="button"
+              className={`delivery-choice__button ${
+                !isHomeDelivery ? 'delivery-choice__button--selected' : ''
+              }`}
+              aria-pressed={!isHomeDelivery}
+              onClick={() =>
+                updateDelivery(
+                  isHomeDelivery ? 'radnja centar' : userInfo.preuzimanje
+                )
+              }
+            >
+              Preuzimanje u radnji
+            </button>
+            <button
+              type="button"
+              className={`delivery-choice__button ${
+                isHomeDelivery ? 'delivery-choice__button--selected' : ''
+              }`}
+              aria-pressed={isHomeDelivery}
+              onClick={() => updateDelivery('kurirska sluzba')}
+            >
+              Dostava na adresu
+            </button>
+          </div>
+          {!isHomeDelivery && (
+            <fieldset className="delivery-choice__stores">
+              <legend>Izaberite radnju</legend>
+              <label
+                className={`delivery-choice__store-option ${
+                  userInfo.preuzimanje === 'radnja centar'
+                    ? 'delivery-choice__store--selected'
+                    : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="pickup-location"
+                  value="radnja centar"
+                  checked={userInfo.preuzimanje === 'radnja centar'}
+                  onChange={() => updateDelivery('radnja centar')}
+                />
+                <span>
+                  <strong>Radnja u centru</strong>
+                  <small> Karadžićeva 12, Niš</small>
+                </span>
+              </label>
+              <label
+                className={`delivery-choice__store-option ${
+                  userInfo.preuzimanje === 'radnja trosarina'
+                    ? 'delivery-choice__store--selected'
+                    : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="pickup-location"
+                  value="radnja trosarina"
+                  checked={userInfo.preuzimanje === 'radnja trosarina'}
+                  onChange={() => updateDelivery('radnja trosarina')}
+                />
+                <span>
+                  <strong>Radnja na Trošarini</strong>
+                  <small> Bul. Sv. cara Konstantina bb lokal 10, Niš
+                  </small>
+                </span>
+              </label>
+            </fieldset>
+          )}
         </div>
       )}
       {(uploadFinished || uploading) && (
