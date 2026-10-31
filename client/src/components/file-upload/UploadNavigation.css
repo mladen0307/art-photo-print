@@ -67,30 +67,34 @@
   border-color: #bdc9d9;
   background: #f7f9fc;
   box-shadow: 0 5px 12px rgba(35, 52, 76, 0.09);
-  color: #2e456f;
+  color: #4338a8;
 }
 
 .upload-navigation__button--next {
-  background: #354c77;
-  box-shadow: 0 5px 13px rgba(53, 76, 119, 0.22);
+  background: #4338a8;
+  box-shadow: 0 5px 13px rgba(67, 56, 168, 0.22);
   color: #fff;
 }
 
 .upload-navigation__button--next:focus {
-  background-color: #354c77;
+  background-color: #4338a8;
   color: #fff;
 }
 
 .upload-navigation__button--next:hover {
-  background: #293f68;
-  box-shadow: 0 7px 16px rgba(53, 76, 119, 0.28);
+  background: #37308f;
+  box-shadow: 0 7px 16px rgba(67, 56, 168, 0.28);
   color: #fff;
   transform: translateY(-1px);
 }
 
 .upload-navigation__button:focus-visible {
-  outline: 3px solid rgba(53, 76, 119, 0.3);
+  outline: 3px solid rgba(67, 56, 168, 0.3);
   outline-offset: 3px;
+}
+
+.upload-navigation__button--next:focus-visible {
+  outline-color: rgba(67, 56, 168, 0.3);
 }
 
 .upload-navigation__button:disabled {

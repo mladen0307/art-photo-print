@@ -32,8 +32,8 @@
 }
 
 .delivery-choice__button--selected {
-  border-color: #aab5c4;
-  background: #f5f6f8;
+  border-color: #4338a8;
+  background: #f5f3ff;
   box-shadow: none;
 }
 
@@ -43,12 +43,13 @@
 }
 
 .delivery-choice__button--selected:focus {
-  background-color: #f5f6f8;
+  border-color: #4338a8;
+  background-color: #f5f3ff;
 }
 
 .delivery-choice__button:focus-visible,
 .delivery-choice__store-option:focus-within {
-  outline: 2px solid #536b94;
+  outline: 2px solid rgba(67, 56, 168, 0.45);
   outline-offset: 2px;
 }
 
@@ -119,8 +120,8 @@
 }
 
 .delivery-choice__store-option.delivery-choice__store--selected {
-  border-color: #526b96;
-  background: #f4f7fc;
+  border-color: #4338a8;
+  background: #f5f3ff;
 }
 
 @media only screen and (max-width: 600px) {

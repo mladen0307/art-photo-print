@@ -88,6 +88,7 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
     const email = new Email(order.email);
     const emailData = {
       title: 'Vaša porudžbenica je poslata na adresu',
+      message: 'Vaša porudžbenica je poslata na adresu koju ste naveli.',
       order: order
     };
     await email.send(
@@ -99,6 +100,7 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
     const email = new Email(order.email);
     const emailData = {
       title: 'Vašе fotografije možete preuzeti na izabranoj lokaciji',
+      message: `Vašе fotografije možete preuzeti na lokaciji: ${order.preuzimanje}.`,
       order: order
     };
     await email.send(
@@ -235,7 +237,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
   //send email to user
   const  email = new Email(newOrder.email);
   const emailData = {
-    title: 'Vaša porudžbenica je u obradi',
+    title: 'Vaša porudžbenica je u sačuvana',
+    message: 'Vaša porudžbenica je uspešno sačuvana. Kada Vaše fotografije budu spremne za preuzimanje, poslaćemo Vam email sa detaljima.',
     order: newOrder
   };
   await email.send(

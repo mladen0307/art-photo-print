@@ -23,8 +23,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: #e9eef8;
-  color: #394f79;
+  background: #f0edff;
+  color: #4338a8;
 }
 
 .order-summary__icon .material-icons {
@@ -50,7 +50,7 @@
 
 .order-summary__format strong {
   margin-left: 4px;
-  color: #435673;
+  color: #4338a8;
   font-weight: 700;
 }
 
@@ -111,7 +111,7 @@
 }
 
 .order-summary__total > strong {
-  color: #2e456f;
+  color: #4338a8;
   font-size: 20px;
   font-weight: 700;
   white-space: nowrap;
