@@ -30,8 +30,10 @@ const getDeliveryPresentation = delivery => {
   };
 };
 
-export default function Order({ order, setFetchAgainToggle }) {
+export default function Order({ order, setFetchAgainToggle, isAdmin }) {
   const [izdato, setIzdato] = useState(order.izdato);
+  const [deletingOrder, setDeletingOrder] = useState(false);
+  const [deleteOrderError, setDeleteOrderError] = useState('');
   const photos = order.photos.map(photo => photo.url).filter(Boolean);
 
   useEffect(() => {
@@ -64,6 +66,25 @@ export default function Order({ order, setFetchAgainToggle }) {
     }).then(response => {
       setFetchAgainToggle(prev => !prev);
     });
+  };
+
+  const obrisiOrder = async () => {
+    setDeletingOrder(true);
+    setDeleteOrderError('');
+    try {
+      await axios.delete(`/api/v1/orders/${order.id}/permanent`, {
+        withCredentials: true
+      });
+      setFetchAgainToggle(prev => !prev);
+    } catch (error) {
+      setDeleteOrderError(
+        error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
+          : 'Porudžbina nije mogla biti trajno obrisana.'
+      );
+    } finally {
+      setDeletingOrder(false);
+    }
   };
 
   const pricePerPhoto =
@@ -226,7 +247,26 @@ export default function Order({ order, setFetchAgainToggle }) {
                 Obriši fotografije
               </button>
             )}
+
+            {isAdmin && order.obrisano && (
+              <button
+                type="button"
+                data-target={`permanent-modal-${order._id}`}
+                className="order-card__button order-card__button--danger modal-trigger"
+                disabled={deletingOrder}
+              >
+                <i className="material-icons" aria-hidden="true">
+                  delete_forever
+                </i>
+                {deletingOrder ? 'Brisanje...' : 'Obriši order'}
+              </button>
+            )}
           </div>
+          {deleteOrderError && (
+            <p className="order-card__action-error" role="alert">
+              {deleteOrderError}
+            </p>
+          )}
         </footer>
 
         <div
@@ -256,6 +296,42 @@ export default function Order({ order, setFetchAgainToggle }) {
             </button>
           </div>
         </div>
+
+        {isAdmin && order.obrisano && (
+          <div
+            id={`permanent-modal-${order._id}`}
+            className="modal order-card__delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`permanent-delete-order-title-${order._id}`}
+          >
+            <div className="modal-content">
+              <h5 id={`permanent-delete-order-title-${order._id}`}>
+                Trajno obriši order?
+              </h5>
+              <p>
+                Porudžbina će biti trajno uklonjena iz baze i ova radnja se ne
+                može poništiti.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="modal-close waves-effect btn-flat"
+              >
+                Odustani
+              </button>
+              <button
+                type="button"
+                onClick={obrisiOrder}
+                className="modal-close waves-effect btn-flat pink darken-2 white-text"
+                disabled={deletingOrder}
+              >
+                Trajno obriši
+              </button>
+            </div>
+          </div>
+        )}
       </article>
     </div>
   );

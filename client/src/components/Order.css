@@ -339,6 +339,13 @@
   font-style: italic;
 }
 
+.order-card__action-error {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  color: #a84d43;
+  font-size: 12px;
+}
+
 .order-card__delete-modal {
   width: min(440px, calc(100% - 32px));
   border-radius: 12px;

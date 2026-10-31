@@ -8,6 +8,14 @@ router.route('/').post(orderController.createOrder);
 router.route('/').get(authController.protect, orderController.getAllOrders);
 
 router
+  .route('/:id/permanent')
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin'),
+    orderController.permanentlyDeleteOrder
+  );
+
+router
   .route('/:id')
   .get(authController.protect, orderController.getOrder)
   .patch(authController.protect, orderController.updateOrder)

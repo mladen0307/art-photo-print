@@ -328,6 +328,36 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.permanentlyDeleteOrder = catchAsync(async (req, res, next) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return next(new AppError('No order found with that ID', 404));
+  }
+
+  if (!order.obrisano) {
+    return next(
+      new AppError('Order photos must be deleted before removing the order', 400)
+    );
+  }
+
+  const deletedOrder = await Order.findOneAndDelete({
+    _id: req.params.id,
+    obrisano: true
+  });
+
+  if (!deletedOrder) {
+    return next(
+      new AppError('Order could not be removed because its state has changed', 409)
+    );
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: null
+  });
+});
+
 const getArchiveFileName = (fileName, usedNames) => {
   let safeName = path.basename(fileName.replace(/\\/g, '/')).replace(
     /[\u0000-\u001f\u007f]/g,

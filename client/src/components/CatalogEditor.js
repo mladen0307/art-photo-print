@@ -102,6 +102,16 @@ const CatalogEditor = () => {
     });
   };
 
+  const removeFormat = formatIndex => {
+    const updatedFormats = formats.filter(
+      (format, index) => index !== formatIndex
+    );
+    setFormats(updatedFormats);
+    setActiveTab(Math.min(formatIndex, updatedFormats.length));
+    setError('');
+    setMessage('');
+  };
+
   const addFormat = event => {
     event.preventDefault();
     const name = newFormatName.trim();
@@ -217,6 +227,9 @@ const CatalogEditor = () => {
                   className={`btn-flat ${
                     activeTab === formatIndex ? 'indigo white-text' : ''
                   }`}
+                  style={{
+                    textDecoration: format.enabled ? 'underline' : 'none'
+                  }}
                   onClick={() => setActiveTab(formatIndex)}
                 >
                   {format.name}
@@ -248,10 +261,27 @@ const CatalogEditor = () => {
                 hidden={activeTab !== formatIndex}
               >
                 <div className="row" style={{ marginBottom: 0 }}>
-                  <div className="col s8">
+                  <div className="col s7">
                     <h6>{format.name}</h6>
                   </div>
-                  <div className="col s4 right-align">
+                  <div className="col s5 right-align">
+                    <button
+                      type="button"
+                      className="btn-flat red-text"
+                      disabled={saving}
+                      onClick={() => removeFormat(formatIndex)}
+                      aria-label={`Ukloni format ${format.name}`}
+                    >
+                      <i className="material-icons left" aria-hidden="true">
+                        delete_outline
+                      </i>
+                      Ukloni format
+                    </button>
+                  </div>
+                </div>
+
+                <div className="row" style={{ marginBottom: 0 }}>
+                  <div className="col s12 right-align">
                     <label>
                       <input
                         type="checkbox"

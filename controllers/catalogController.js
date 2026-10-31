@@ -79,7 +79,7 @@ exports.updateCatalog = catchAsync(async (req, res, next) => {
   ) {
     return next(
       new AppError(
-        'Catalog must include every known format once, with valid quantity tiers and at least one enabled format',
+        'Catalog must include valid formats with valid quantity tiers and at least one enabled format',
         400
       )
     );
