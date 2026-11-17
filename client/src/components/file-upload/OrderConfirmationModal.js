@@ -93,7 +93,7 @@ const OrderConfirmationModal = ({
       <button
         type="submit"
         name="action"
-        className="modal-close order-modal__button order-modal__button--primary"
+        className="order-modal__button order-modal__button--primary"
       >
         Potvrdi porudžbinu
       </button>

@@ -100,6 +100,13 @@ export const FileUpload = () => {
     e.preventDefault();
     if (step !== 1) setStep(step => step - 1);
   };
+  const handleOrderSubmit = event => {
+    submitOrder(event);
+    const confirmationModal = M.Modal.getInstance(
+      document.getElementById('modal1')
+    );
+    if (confirmationModal) confirmationModal.close();
+  };
 
   return (
     <Fragment>
@@ -117,7 +124,7 @@ export const FileUpload = () => {
       </div>
 
       <div className="container" style={{ fontFamily: 'Mulish' }}>
-        <form onSubmit={submitOrder}>
+        <form onSubmit={handleOrderSubmit}>
           {step === 1 && (
             <UploadPhotosStep
               files={files}

@@ -69,6 +69,8 @@ describe('UploadNavigation', () => {
     rerender(
       <UploadNavigation {...defaultProps} step={3} userFieldsValid />
     );
-    expect(getByText('Pošalji').closest('button').disabled).toBe(false);
+    const submitButton = getByText('Pošalji').closest('button');
+    expect(submitButton.disabled).toBe(false);
+    expect(submitButton.type).toBe('button');
   });
 });

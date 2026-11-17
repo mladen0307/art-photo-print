@@ -68,6 +68,7 @@ const UploadNavigation = ({
         )}
         {step === 3 && !uploading && !uploadFinishedSuccessfully && (
           <button
+            type="button"
             className="upload-navigation__button upload-navigation__button--next modal-trigger"
             data-target="modal1"
             disabled={!userFieldsValid}
